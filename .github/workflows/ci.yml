@@ -1,0 +1,62 @@
+# Copy to .github/workflows/ci.yml to enable. Kept here because pushing
+# workflow files needs a token with the `workflow` scope.
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  lint-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+      - run: pip install -e '.[dev]'
+      - run: ruff check . && ruff format --check .
+      - run: pytest
+      - name: Gateway overhead benchmark (smoke, not a measurement)
+        run: python bench/gateway_overhead.py --requests 200 --repeats 1 --out /tmp/bench.json
+
+  manifests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - run: pip install jsonschema==4.23.0 PyYAML==6.0.2
+      - name: Install kubeconform
+        run: |
+          curl -sSL https://github.com/yannh/kubeconform/releases/download/v0.6.7/kubeconform-linux-amd64.tar.gz | tar xz
+          sudo mv kubeconform /usr/local/bin/
+      - run: make validate
+
+  image:
+    runs-on: ubuntu-latest
+    needs: lint-test
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: false
+          load: true
+          tags: agent-gateway-stack:${{ github.sha }}
+          build-args: GIT_SHA=${{ github.sha }}
+      - name: End-to-end through docker compose
+        run: |
+          docker compose up -d
+          for i in $(seq 1 30); do curl -fs localhost:8000/readyz && break; sleep 1; done
+          curl -fs localhost:8000/v1/agent/runs -H 'content-type: application/json' \
+            -d '{"task": "Air density at 11000 m in the ISA model?"}' | tee /tmp/run.json
+          python -c "import json; r=json.load(open('/tmp/run.json')); assert r['status']=='completed', r"
+          docker run --rm --entrypoint id agent-gateway-stack:${{ github.sha }} -u | grep -qx 10001

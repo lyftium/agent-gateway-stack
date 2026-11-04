@@ -177,3 +177,8 @@ MIT License.
 ## Physics tools
 
 ISA helpers ship with an analytical-baseline validation note: [`docs/physics-validation.md`](docs/physics-validation.md). Domain gates and CI point tests belong with the tools, not in the LLM.
+
+## Security & physics proofs
+
+- Agent / gateway boundary map: [`docs/security-tests.md`](docs/security-tests.md)
+- ISA analytical baselines (pytest): [`docs/physics-validation.md`](docs/physics-validation.md)

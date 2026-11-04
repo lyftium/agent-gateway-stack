@@ -9,7 +9,10 @@ import pytest
 
 from agent_stack.agent.approval import ApprovalLedger, approval_fingerprint, execute_approved
 from agent_stack.agent.loop import run_agent
+from agent_stack.agent.app import create_app as create_agent
 from agent_stack.agent.tools import ALLOWED_TOOL_NAMES, TOOLS, submit_simulation_job
+from agent_stack.gateway.app import create_app as create_gateway
+from conftest import AGENT_KEY, HostRouter, make_config
 
 
 def test_registry_matches_closed_allowlist():
@@ -90,10 +93,6 @@ def test_execute_approved_rejects_non_approval_tools():
 
 @pytest.mark.anyio
 async def test_approvals_http_endpoint_is_idempotent(mock_app):
-    from conftest import AGENT_KEY, HostRouter, make_config
-    from agent_stack.agent.app import create_app as create_agent
-    from agent_stack.gateway.app import create_app as create_gateway
-
     gateway = create_gateway(
         make_config(["mock"]),
         client=httpx.AsyncClient(transport=HostRouter({"mock": mock_app})),

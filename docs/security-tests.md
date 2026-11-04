@@ -12,6 +12,7 @@
 | Unknown / malformed tools | Unknown name or bad JSON → error steps, no crash | `tests/test_agent.py` |
 | Schema / domain gates | OOD ISA altitude rejected; unit mismatch refused | `tests/test_tools.py` |
 | Tool output as data | Invalid args fed back to the model as tool errors, not elevated privileges | `tests/test_agent.py` |
+| Prompt-injection posture | Injected `bash` / privileged tool names → unknown-tool error; side-effect tools still `awaiting_approval` | `tests/test_prompt_injection_posture.py` |
 
 ## Prompt injection posture (engineering)
 
@@ -24,7 +25,7 @@
 
 ```bash
 pip install -e '.[dev]'
-pytest tests/test_gateway.py tests/test_agent.py tests/test_tools.py -q
+pytest tests/test_gateway.py tests/test_agent.py tests/test_tools.py tests/test_prompt_injection_posture.py -q
 ```
 
 ## Limits

@@ -10,12 +10,13 @@ Kubernetes / OpenShift AI manifests for vLLM behind KServe.
 ![KServe](https://img.shields.io/badge/KServe-InferenceService-326CE5?logo=kubernetes&logoColor=white)
 ![OpenShift manifests](https://img.shields.io/badge/OpenShift_AI_manifests-6B7280?logo=redhatopenshift&logoColor=white)
 ![Prometheus](https://img.shields.io/badge/Prometheus-metrics-E6522C?logo=prometheus&logoColor=white)
-![tests](https://img.shields.io/badge/tests-46_local-lightgrey)
+![tests](https://img.shields.io/badge/tests-48_local-lightgrey)
 
 | | |
 |:--|:--|
 | **Problem** | Every client re-implements keys, quotas, routing and logging; agents add opaque tool loops on top. |
-| **Verify** | `pip install -e '.[dev]' && pytest` (46 tests) · `docker compose up --build` · `make validate` |
+| **Verify** | `pip install -e '.[dev]' && pytest` (48 tests, incl. ISA physics + prompt-injection posture) · `docker compose up --build` · `make validate` |
+| **CI-ready** | [`ci/github-actions-ci.yml`](ci/github-actions-ci.yml) — `bash scripts/install-github-actions.sh` once `workflow` scope is granted |
 | **Status & limits** | Laptop + mock model measured (~1.5 ms gateway overhead). OpenShift AI / KServe manifests prepared and schema-validated; **not applied to a live cluster**. CI written, not enabled. |
 | **Next** | Deploy on OpenShift AI; shared multi-replica quotas; tool-calling accuracy with a real model. |
 
@@ -150,7 +151,7 @@ kustomize build deploy/overlays/openshift-ai | oc apply -f -
 
 | Check | How | Status |
 |---|---|---|
-| Unit + integration tests | `pytest`: gateway, config, tools, agent loop, agent → gateway → model in-process | 46 passing |
+| Unit + integration tests | `pytest`: gateway, config, tools, agent loop, agent → gateway → model, injection posture, ISA | 48 passing |
 | Lint | `ruff check`, `ruff format --check` | clean |
 | Core manifests | rendered overlays against Kubernetes 1.30 strict JSON schemas | all objects valid (kind: 19, OpenShift AI: 17 core) |
 | Custom resources | [`scripts/validate_crds.py`](scripts/validate_crds.py) against KServe v0.21.0 and OpenShift Route CRDs, unknown fields rejected | Route, ServingRuntime, InferenceService valid; a typo control is rejected |

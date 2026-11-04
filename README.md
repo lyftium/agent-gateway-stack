@@ -8,7 +8,7 @@ Kubernetes / OpenShift AI manifests for vLLM behind KServe.
 ![FastAPI](https://img.shields.io/badge/FastAPI-009688?logo=fastapi&logoColor=white)
 ![vLLM](https://img.shields.io/badge/vLLM-tool_calling-30A2FF?logo=vllm&logoColor=white)
 ![KServe](https://img.shields.io/badge/KServe-InferenceService-326CE5?logo=kubernetes&logoColor=white)
-![OpenShift](https://img.shields.io/badge/OpenShift_AI-EE0000?logo=redhatopenshift&logoColor=white)
+![OpenShift manifests](https://img.shields.io/badge/OpenShift_AI_manifests-6B7280?logo=redhatopenshift&logoColor=white)
 ![Prometheus](https://img.shields.io/badge/Prometheus-metrics-E6522C?logo=prometheus&logoColor=white)
 ![tests](https://img.shields.io/badge/tests-46_local-lightgrey)
 

@@ -6,13 +6,13 @@ import json
 
 import httpx
 import pytest
+from conftest import AGENT_KEY, HostRouter, make_config
 
+from agent_stack.agent.app import create_app as create_agent
 from agent_stack.agent.approval import ApprovalLedger, approval_fingerprint, execute_approved
 from agent_stack.agent.loop import run_agent
-from agent_stack.agent.app import create_app as create_agent
 from agent_stack.agent.tools import ALLOWED_TOOL_NAMES, TOOLS, submit_simulation_job
 from agent_stack.gateway.app import create_app as create_gateway
-from conftest import AGENT_KEY, HostRouter, make_config
 
 
 def test_registry_matches_closed_allowlist():
@@ -30,9 +30,7 @@ def test_side_effect_fn_refuses_direct_call():
     from agent_stack.agent.tools import SubmitJobArgs
 
     with pytest.raises(RuntimeError, match="human approval"):
-        submit_simulation_job(
-            SubmitJobArgs(case_name="direct", solver="cfd", mesh_cells=100)
-        )
+        submit_simulation_job(SubmitJobArgs(case_name="direct", solver="cfd", mesh_cells=100))
 
 
 @pytest.mark.anyio

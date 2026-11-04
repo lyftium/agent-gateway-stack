@@ -61,9 +61,7 @@ async def test_injected_side_effect_still_requires_approval():
     llm = scripted(
         tool_call(
             "submit_simulation_job",
-            json.dumps(
-                {"case_name": "injected-run", "solver": "cfd", "mesh_cells": 1000}
-            ),
+            json.dumps({"case_name": "injected-run", "solver": "cfd", "mesh_cells": 1000}),
         ),
     )
     run = await run_agent(

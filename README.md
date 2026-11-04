@@ -1,4 +1,6 @@
 # AI Gateway & Tool-Calling Agent
+
+![CI](https://github.com/lyftium/agent-gateway-stack/actions/workflows/ci.yml/badge.svg)
 ### Shared LLM plumbing: auth, quotas, failover — plus a bounded agent that other services can call
 
 An OpenAI-compatible **gateway** and a **tool-calling agent** microservice, with
@@ -16,8 +18,8 @@ Kubernetes / OpenShift AI manifests for vLLM behind KServe.
 |:--|:--|
 | **Problem** | Every client re-implements keys, quotas, routing and logging; agents add opaque tool loops on top. |
 | **Verify** | `pip install -e '.[dev]' && pytest` (allowlist + approve-once idempotency + ISA + injection posture) · `docker compose up --build` · `make validate` |
-| **CI-ready** | [`ci/github-actions-ci.yml`](ci/github-actions-ci.yml) — `bash scripts/install-github-actions.sh` once `workflow` scope is granted |
-| **Status & limits** | Laptop + mock model measured (~1.5 ms gateway overhead). OpenShift AI / KServe manifests prepared and schema-validated; **not applied to a live cluster**. CI written, not enabled. |
+| **CI** | ![CI](https://github.com/lyftium/agent-gateway-stack/actions/workflows/ci.yml/badge.svg) — workflow live under [`.github/workflows/ci.yml`](.github/workflows/ci.yml) |
+| **Status & limits** | Laptop + mock model measured (~1.5 ms gateway overhead). OpenShift AI / KServe manifests prepared and schema-validated; **not applied to a live cluster**. CI **enabled** on `main` (see badge). |
 | **Next** | Deploy on OpenShift AI; shared multi-replica quotas; tool-calling accuracy with a real model. |
 
 ## Abstract

@@ -28,6 +28,7 @@ from prometheus_client import (
 from pydantic import BaseModel, Field
 
 from agent_stack import __version__
+from agent_stack.agent.approval import ApprovalLedger, execute_approved
 from agent_stack.agent.loop import PROMPT_VERSION, run_agent
 from agent_stack.agent.tools import TOOLS
 from agent_stack.common import get_logger, git_sha, log_event, request_id
@@ -38,6 +39,14 @@ log = get_logger("agent")
 class RunRequest(BaseModel):
     task: str = Field(min_length=1, max_length=4000)
     max_steps: int = Field(default=6, ge=1, le=10)
+
+
+class ApproveRequest(BaseModel):
+    """Human-reviewed side-effect call (from awaiting_approval.pending_call)."""
+
+    tool: str = Field(min_length=1, max_length=64)
+    arguments: dict[str, Any]
+    approved_by: str = Field(min_length=1, max_length=64, description="operator id / email local part")
 
 
 class GatewayError(Exception):
@@ -62,10 +71,14 @@ def create_app(
             await http.aclose()
 
     app = FastAPI(title="agent", docs_url=None, redoc_url=None, lifespan=lifespan)
+    ledger = ApprovalLedger()
     registry = CollectorRegistry()
     runs = Counter("agent_runs", "Agent runs by final status", ["status"], registry=registry)
     tool_calls = Counter(
         "agent_tool_calls", "Tool calls by outcome", ["tool", "outcome"], registry=registry
+    )
+    approvals = Counter(
+        "agent_approvals", "Approved side effects by status", ["status"], registry=registry
     )
     duration = Histogram(
         "agent_run_seconds",
@@ -180,5 +193,23 @@ def create_app(
             "tool_versions": {name: t.version for name, t in TOOLS.items()},
         }
         return JSONResponse({**result.to_dict(), "record": record}, headers={"x-request-id": rid})
+
+    @app.post("/v1/agent/approvals")
+    async def approve_side_effect(body: ApproveRequest, request: Request) -> JSONResponse:
+        """Accept a human-reviewed tool call at most once per fingerprint."""
+        rid = request_id(request.headers.get("x-request-id"))
+        out = execute_approved(body.tool, body.arguments, ledger)
+        approvals.labels(out["status"]).inc()
+        log_event(
+            log,
+            "approval",
+            request_id=rid,
+            approved_by=body.approved_by,
+            tool=body.tool,
+            status=out["status"],
+            idempotency_key=out.get("idempotency_key"),
+        )
+        code = 200 if out["status"] in ("accepted", "duplicate") else 400
+        return JSONResponse({**out, "request_id": rid}, status_code=code, headers={"x-request-id": rid})
 
     return app

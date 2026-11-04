@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 
+import httpx
 import pytest
 
 from agent_stack.agent.approval import ApprovalLedger, approval_fingerprint, execute_approved
@@ -85,3 +86,33 @@ def test_execute_approved_is_idempotent():
 def test_execute_approved_rejects_non_approval_tools():
     out = execute_approved("isa_atmosphere", {"altitude_m": 0}, ApprovalLedger())
     assert out["status"] == "rejected"
+
+
+@pytest.mark.anyio
+async def test_approvals_http_endpoint_is_idempotent(mock_app):
+    from conftest import AGENT_KEY, HostRouter, make_config
+    from agent_stack.agent.app import create_app as create_agent
+    from agent_stack.gateway.app import create_app as create_gateway
+
+    gateway = create_gateway(
+        make_config(["mock"]),
+        client=httpx.AsyncClient(transport=HostRouter({"mock": mock_app})),
+    )
+    agent = create_agent(
+        gateway_url="http://gateway/v1",
+        api_key=AGENT_KEY,
+        model="chat",
+        client=httpx.AsyncClient(transport=HostRouter({"gateway": gateway})),
+    )
+    client = httpx.AsyncClient(transport=httpx.ASGITransport(app=agent), base_url="http://agent")
+    body = {
+        "tool": "submit_simulation_job",
+        "arguments": {"case_name": "http-idem", "solver": "cfd", "mesh_cells": 100},
+        "approved_by": "operator",
+    }
+    r1 = await client.post("/v1/agent/approvals", json=body)
+    r2 = await client.post("/v1/agent/approvals", json=body)
+    assert r1.status_code == 200 and r1.json()["status"] == "accepted"
+    assert r2.status_code == 200 and r2.json()["status"] == "duplicate"
+    assert r1.json()["idempotency_key"] == r2.json()["idempotency_key"]
+    await client.aclose()

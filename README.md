@@ -10,7 +10,7 @@ Kubernetes / OpenShift AI manifests for vLLM behind KServe.
 ![KServe](https://img.shields.io/badge/KServe-InferenceService-326CE5?logo=kubernetes&logoColor=white)
 ![OpenShift manifests](https://img.shields.io/badge/OpenShift_AI_manifests-6B7280?logo=redhatopenshift&logoColor=white)
 ![Prometheus](https://img.shields.io/badge/Prometheus-metrics-E6522C?logo=prometheus&logoColor=white)
-![tests](https://img.shields.io/badge/tests-54_local-lightgrey)
+![tests](https://img.shields.io/badge/tests-55_local-lightgrey)
 
 | | |
 |:--|:--|
@@ -151,7 +151,7 @@ kustomize build deploy/overlays/openshift-ai | oc apply -f -
 
 | Check | How | Status |
 |---|---|---|
-| Unit + integration tests | `pytest`: gateway, config, tools, agent loop, agent → gateway → model, injection posture, ISA | 48 passing |
+| Unit + integration tests | `pytest`: gateway, config, tools, agent loop, injection posture, ISA, allowlist, approve-once | 55 passing |
 | Lint | `ruff check`, `ruff format --check` | clean |
 | Core manifests | rendered overlays against Kubernetes 1.30 strict JSON schemas | all objects valid (kind: 19, OpenShift AI: 17 core) |
 | Custom resources | [`scripts/validate_crds.py`](scripts/validate_crds.py) against KServe v0.21.0 and OpenShift Route CRDs, unknown fields rejected | Route, ServingRuntime, InferenceService valid; a typo control is rejected |

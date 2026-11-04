@@ -1,0 +1,36 @@
+# Local stack: agent -> gateway -> mock model. Only the agent and gateway are published.
+#   docker compose up --build
+#   curl -s localhost:8000/v1/agent/runs -H 'content-type: application/json' \
+#     -d '{"task": "Air density at 11000 m in the ISA model?"}'
+x-service: &service
+  build: .
+  read_only: true
+  security_opt: ["no-new-privileges:true"]
+  cap_drop: [ALL]
+
+services:
+  mockllm:
+    <<: *service
+    command: ["mockllm"]
+    environment:
+      MOCK_TTFT_MS: "50"
+      MOCK_TOKEN_DELAY_MS: "10"
+
+  gateway:
+    <<: *service
+    command: ["gateway"]
+    environment:
+      GATEWAY_CONFIG: /config/local.yaml
+    volumes: ["./config:/config:ro"]
+    ports: ["8001:8080"]
+    depends_on: [mockllm]
+
+  agent:
+    <<: *service
+    command: ["agent"]
+    environment:
+      AGENT_GATEWAY_URL: http://gateway:8080/v1
+      AGENT_API_KEY: dev-agent-key
+      AGENT_MODEL: chat
+    ports: ["8000:8080"]
+    depends_on: [gateway]

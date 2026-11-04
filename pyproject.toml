@@ -1,0 +1,37 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "agent-gateway-stack"
+version = "0.1.0"
+description = "OpenAI-compatible AI gateway and a tool-calling agent service, deployable on Kubernetes/OpenShift in front of vLLM/KServe"
+requires-python = ">=3.11"
+dependencies = [
+  "fastapi==0.115.8",
+  "uvicorn==0.34.0",
+  "httpx==0.28.1",
+  "pydantic==2.10.6",
+  "prometheus-client==0.21.1",
+  "PyYAML==6.0.2",
+]
+
+[project.optional-dependencies]
+dev = ["pytest==8.3.4", "anyio==4.12.1", "ruff"]
+
+[project.scripts]
+agent-stack = "agent_stack.__main__:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP"]

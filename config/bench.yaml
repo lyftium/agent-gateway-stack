@@ -1,0 +1,15 @@
+# Used by bench/gateway_overhead.py: quotas high enough never to trigger.
+routes:
+  - alias: chat
+    upstreams:
+      - name: mock
+        base_url: http://127.0.0.1:18081/v1
+        model: mock
+        timeout_s: 30
+tenants:
+  - name: bench
+    key_sha256: 768d431c7599a91b58ae5747e08e9aa96dcb4eef45e029c87e3e060e521dcead
+    models: [chat]
+    requests_per_minute: 10000000
+    tokens_per_minute: 1000000000
+    max_tokens: 512

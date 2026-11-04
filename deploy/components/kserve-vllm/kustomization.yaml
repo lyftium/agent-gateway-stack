@@ -1,0 +1,9 @@
+# A tool-calling model behind the gateway: vLLM ServingRuntime + KServe
+# InferenceService (RawDeployment). The predictor only accepts traffic from the
+# gateway and from cluster monitoring.
+apiVersion: kustomize.config.k8s.io/v1alpha1
+kind: Component
+resources:
+  - servingruntime-vllm-tools.yaml
+  - inferenceservice-qwen.yaml
+  - networkpolicy-predictor.yaml

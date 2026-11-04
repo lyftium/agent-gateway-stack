@@ -1,0 +1,16 @@
+# Platform-neutral base. Overlays add the gateway config (ConfigMap
+# `gateway-config` with key gateway.yaml), the agent credentials Secret and
+# platform specifics (ingress, DNS egress, model backends).
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+labels:
+  - pairs:
+      app.kubernetes.io/part-of: agent-gateway-stack
+resources:
+  - serviceaccounts.yaml
+  - gateway.yaml
+  - agent.yaml
+  - networkpolicy.yaml
+images:
+  - name: agent-gateway-stack
+    newTag: "0.1.0"

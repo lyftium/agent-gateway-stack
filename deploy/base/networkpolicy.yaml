@@ -1,0 +1,64 @@
+# Ingress: deny by default; the gateway accepts traffic only from the agent and
+# from namespaces labelled as allowed clients; the agent accepts traffic from
+# its own namespace. Platform overlays add router/monitoring ingress and
+# DNS + model-backend egress.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: default-deny-ingress
+spec:
+  podSelector: {}
+  policyTypes: ["Ingress"]
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: ai-gateway-ingress
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: ai-gateway
+  policyTypes: ["Ingress"]
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: agent
+        - namespaceSelector:
+            matchLabels:
+              ai-gateway/client: "true"
+      ports:
+        - port: 8080
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: agent-ingress
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: agent
+  policyTypes: ["Ingress"]
+  ingress:
+    - from:
+        - podSelector: {}
+      ports:
+        - port: 8080
+---
+# The agent may only reach the gateway (plus DNS, added per platform).
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: agent-egress
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: agent
+  policyTypes: ["Egress"]
+  egress:
+    - to:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: ai-gateway
+      ports:
+        - port: 8080

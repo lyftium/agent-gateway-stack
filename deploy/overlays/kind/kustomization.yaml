@@ -1,0 +1,23 @@
+# Local cluster with the mock model:
+#   docker build -t agent-gateway-stack:dev . && kind load docker-image agent-gateway-stack:dev
+#   kubectl apply -k deploy/overlays/kind
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: agent-stack
+resources:
+  - namespace.yaml
+  - ../../base
+  - mock-llm.yaml
+  - networkpolicy-kind.yaml
+configMapGenerator:
+  - name: gateway-config
+    files:
+      - gateway.yaml
+secretGenerator:
+  # Dev-only key, matches the hash in gateway.yaml. Never reuse outside kind.
+  - name: agent-credentials
+    literals:
+      - api-key=dev-agent-key
+images:
+  - name: agent-gateway-stack
+    newTag: dev

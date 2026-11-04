@@ -1,0 +1,23 @@
+# Tenant key hashes are deployment parameters. The values below are the
+# sha256 of the public dev keys ("dev-agent-key", "dev-team-key") and must be
+# replaced with hashes of real keys before any shared use.
+routes:
+  - alias: chat
+    upstreams:
+      - name: qwen-tools
+        base_url: http://qwen-tools-predictor/v1
+        model: qwen-tools
+        timeout_s: 120
+tenants:
+  - name: agent
+    key_sha256: 768d431c7599a91b58ae5747e08e9aa96dcb4eef45e029c87e3e060e521dcead
+    models: [chat]
+    requests_per_minute: 300
+    tokens_per_minute: 400000
+    max_tokens: 1024
+  - name: team
+    key_sha256: 08ac194c207da1055fcbec5369fade23167a8f560b8c9594eb5f682809b8cab3
+    models: [chat]
+    requests_per_minute: 60
+    tokens_per_minute: 100000
+    max_tokens: 2048

@@ -1,0 +1,14 @@
+routes:
+  - alias: chat
+    upstreams:
+      - name: mock
+        base_url: http://mock-llm/v1
+        model: mock
+        timeout_s: 30
+tenants:
+  - name: agent
+    key_sha256: 768d431c7599a91b58ae5747e08e9aa96dcb4eef45e029c87e3e060e521dcead
+    models: [chat]
+    requests_per_minute: 600
+    tokens_per_minute: 200000
+    max_tokens: 512

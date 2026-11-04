@@ -1,0 +1,14 @@
+# External access goes to the gateway only; the agent and the model stay internal.
+apiVersion: route.openshift.io/v1
+kind: Route
+metadata:
+  name: ai-gateway
+spec:
+  to:
+    kind: Service
+    name: ai-gateway
+  port:
+    targetPort: http
+  tls:
+    termination: edge
+    insecureEdgeTerminationPolicy: Redirect

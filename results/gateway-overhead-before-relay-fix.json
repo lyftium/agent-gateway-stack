@@ -1,0 +1,197 @@
+{
+  "what": "latency added by the gateway in front of an instant mock model",
+  "setup": {
+    "python": "3.11.3",
+    "machine": "arm64",
+    "system": "Darwin",
+    "cpu_count": 10,
+    "uvicorn_workers": 1,
+    "uvloop": false,
+    "httptools": false,
+    "client": "httpx, same machine, keep-alive",
+    "requests_per_point": 1500,
+    "repeats": 3
+  },
+  "results": [
+    {
+      "stream": false,
+      "concurrency": 1,
+      "direct": {
+        "throughput_rps": 639.7,
+        "p50_ms": 1.26,
+        "p95_ms": 3.548,
+        "p99_ms": 5.636,
+        "errors": 0,
+        "p50_ms_per_repeat": [
+          1.129,
+          1.461,
+          1.26
+        ]
+      },
+      "via_gateway": {
+        "throughput_rps": 300.3,
+        "p50_ms": 2.775,
+        "p95_ms": 6.938,
+        "p99_ms": 10.052,
+        "errors": 0,
+        "p50_ms_per_repeat": [
+          2.758,
+          2.863,
+          2.775
+        ]
+      },
+      "added_p50_ms": 1.515,
+      "added_p95_ms": 3.39
+    },
+    {
+      "stream": false,
+      "concurrency": 8,
+      "direct": {
+        "throughput_rps": 869.1,
+        "p50_ms": 6.48,
+        "p95_ms": 21.286,
+        "p99_ms": 49.859,
+        "errors": 0,
+        "p50_ms_per_repeat": [
+          7.044,
+          6.48,
+          6.042
+        ]
+      },
+      "via_gateway": {
+        "throughput_rps": 518.9,
+        "p50_ms": 13.247,
+        "p95_ms": 29.717,
+        "p99_ms": 45.696,
+        "errors": 0,
+        "p50_ms_per_repeat": [
+          13.327,
+          13.247,
+          12.753
+        ]
+      },
+      "added_p50_ms": 6.767,
+      "added_p95_ms": 8.431
+    },
+    {
+      "stream": false,
+      "concurrency": 32,
+      "direct": {
+        "throughput_rps": 260.8,
+        "p50_ms": 55.485,
+        "p95_ms": 430.29,
+        "p99_ms": 820.128,
+        "errors": 0,
+        "p50_ms_per_repeat": [
+          55.485,
+          61.918,
+          53.972
+        ]
+      },
+      "via_gateway": {
+        "throughput_rps": 194.1,
+        "p50_ms": 73.677,
+        "p95_ms": 628.751,
+        "p99_ms": 1048.811,
+        "errors": 0,
+        "p50_ms_per_repeat": [
+          73.677,
+          99.415,
+          61.39
+        ]
+      },
+      "added_p50_ms": 18.192,
+      "added_p95_ms": 198.461
+    },
+    {
+      "stream": true,
+      "concurrency": 1,
+      "direct": {
+        "throughput_rps": 545.6,
+        "p50_ms": 1.508,
+        "p95_ms": 3.621,
+        "p99_ms": 6.369,
+        "errors": 0,
+        "p50_ms_per_repeat": [
+          1.608,
+          1.508,
+          1.388
+        ]
+      },
+      "via_gateway": {
+        "throughput_rps": 253.2,
+        "p50_ms": 3.204,
+        "p95_ms": 7.058,
+        "p99_ms": 12.295,
+        "errors": 0,
+        "p50_ms_per_repeat": [
+          3.204,
+          3.196,
+          3.412
+        ]
+      },
+      "added_p50_ms": 1.696,
+      "added_p95_ms": 3.437
+    },
+    {
+      "stream": true,
+      "concurrency": 8,
+      "direct": {
+        "throughput_rps": 524.8,
+        "p50_ms": 10.19,
+        "p95_ms": 39.845,
+        "p99_ms": 78.522,
+        "errors": 0,
+        "p50_ms_per_repeat": [
+          7.996,
+          10.19,
+          10.59
+        ]
+      },
+      "via_gateway": {
+        "throughput_rps": 206.1,
+        "p50_ms": 26.299,
+        "p95_ms": 88.163,
+        "p99_ms": 208.061,
+        "errors": 0,
+        "p50_ms_per_repeat": [
+          23.15,
+          30.673,
+          26.299
+        ]
+      },
+      "added_p50_ms": 16.109,
+      "added_p95_ms": 48.318
+    },
+    {
+      "stream": true,
+      "concurrency": 32,
+      "direct": {
+        "throughput_rps": 222.2,
+        "p50_ms": 67.313,
+        "p95_ms": 548.801,
+        "p99_ms": 915.456,
+        "errors": 0,
+        "p50_ms_per_repeat": [
+          72.196,
+          61.855,
+          67.313
+        ]
+      },
+      "via_gateway": {
+        "throughput_rps": 175.9,
+        "p50_ms": 102.559,
+        "p95_ms": 576.7,
+        "p99_ms": 1107.816,
+        "errors": 0,
+        "p50_ms_per_repeat": [
+          81.253,
+          102.559,
+          112.575
+        ]
+      },
+      "added_p50_ms": 35.246,
+      "added_p95_ms": 27.899
+    }
+  ]
+}

@@ -1,0 +1,28 @@
+# Served as `qwen-tools`; RawDeployment exposes it as the Service
+# `qwen-tools-predictor` (port 80 -> 8080), which the gateway config targets.
+apiVersion: serving.kserve.io/v1beta1
+kind: InferenceService
+metadata:
+  name: qwen-tools
+  annotations:
+    serving.kserve.io/deploymentMode: RawDeployment
+    openshift.io/display-name: Qwen2.5-7B-Instruct (tool calling)
+spec:
+  predictor:
+    minReplicas: 1
+    maxReplicas: 1
+    tolerations:
+      - {key: nvidia.com/gpu, operator: Exists, effect: NoSchedule}
+    model:
+      runtime: vllm-openai-tools
+      modelFormat:
+        name: vLLM
+      # Weights pre-staged on a PVC; the cluster never pulls from the Hub.
+      storageUri: pvc://model-weights/qwen2.5-7b-instruct
+      args:
+        - --max-model-len=8192
+        - --gpu-memory-utilization=0.90
+        - --max-num-seqs=64
+      resources:
+        requests: {cpu: "4", memory: 24Gi, nvidia.com/gpu: "1"}
+        limits: {cpu: "8", memory: 32Gi, nvidia.com/gpu: "1"}

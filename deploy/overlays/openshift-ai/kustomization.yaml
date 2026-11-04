@@ -1,0 +1,24 @@
+# OpenShift AI: agent + gateway, model served by KServe/vLLM in the same project.
+#   oc new-project agent-stack
+#   oc label namespace agent-stack opendatahub.io/dashboard=true modelmesh-enabled=false
+#   KEY=$(openssl rand -hex 24)
+#   oc create secret generic agent-credentials --from-literal=api-key="$KEY"
+#   # put $(printf %s "$KEY" | sha256sum) into gateway.yaml (tenant "agent")
+#   kustomize build deploy/overlays/openshift-ai | oc apply -f -
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: agent-stack
+resources:
+  - ../../base
+  - route.yaml
+  - networkpolicy-openshift.yaml
+components:
+  - ../../components/kserve-vllm
+configMapGenerator:
+  - name: gateway-config
+    files:
+      - gateway.yaml
+images:
+  - name: agent-gateway-stack
+    newName: ghcr.io/lyftium/agent-gateway-stack
+    newTag: "0.1.0"

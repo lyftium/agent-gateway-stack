@@ -46,7 +46,9 @@ class ApproveRequest(BaseModel):
 
     tool: str = Field(min_length=1, max_length=64)
     arguments: dict[str, Any]
-    approved_by: str = Field(min_length=1, max_length=64, description="operator id / email local part")
+    approved_by: str = Field(
+        min_length=1, max_length=64, description="operator id / email local part"
+    )
 
 
 class GatewayError(Exception):
@@ -210,6 +212,10 @@ def create_app(
             idempotency_key=out.get("idempotency_key"),
         )
         code = 200 if out["status"] in ("accepted", "duplicate") else 400
-        return JSONResponse({**out, "request_id": rid}, status_code=code, headers={"x-request-id": rid})
+        return JSONResponse(
+            {**out, "request_id": rid},
+            status_code=code,
+            headers={"x-request-id": rid},
+        )
 
     return app

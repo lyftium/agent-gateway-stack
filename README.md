@@ -1,7 +1,8 @@
-# agent-gateway-stack
+# AI Gateway & Tool-Calling Agent
+### Shared LLM plumbing: auth, quotas, failover — plus a bounded agent that other services can call
 
-**An AI gateway and a tool-calling agent service, deployable on Kubernetes and
-OpenShift AI in front of vLLM served by KServe.**
+An OpenAI-compatible **gateway** and a **tool-calling agent** microservice, with
+Kubernetes / OpenShift AI manifests for vLLM behind KServe.
 
 ![Python](https://img.shields.io/badge/Python-3.11-3776AB?logo=python&logoColor=white)
 ![FastAPI](https://img.shields.io/badge/FastAPI-009688?logo=fastapi&logoColor=white)
@@ -9,7 +10,14 @@ OpenShift AI in front of vLLM served by KServe.**
 ![KServe](https://img.shields.io/badge/KServe-InferenceService-326CE5?logo=kubernetes&logoColor=white)
 ![OpenShift](https://img.shields.io/badge/OpenShift_AI-EE0000?logo=redhatopenshift&logoColor=white)
 ![Prometheus](https://img.shields.io/badge/Prometheus-metrics-E6522C?logo=prometheus&logoColor=white)
-![tests](https://img.shields.io/badge/tests-46_passing-brightgreen)
+![tests](https://img.shields.io/badge/tests-46_local-lightgrey)
+
+| | |
+|:--|:--|
+| **Problem** | Every client re-implements keys, quotas, routing and logging; agents add opaque tool loops on top. |
+| **Verify** | `pip install -e '.[dev]' && pytest` (46 tests) · `docker compose up --build` · `make validate` |
+| **Status & limits** | Laptop + mock model measured (~1.5 ms gateway overhead). OpenShift AI / KServe manifests prepared and schema-validated; **not applied to a live cluster**. CI written, not enabled. |
+| **Next** | Deploy on OpenShift AI; shared multi-replica quotas; tool-calling accuracy with a real model. |
 
 ## Abstract
 
@@ -24,9 +32,10 @@ records prompt text. An **agent microservice** reaches models only through the
 gateway and runs a bounded tool-calling loop in which the model proposes and
 code decides: every tool call is looked up, parsed, validated against a typed
 schema, run with a timeout, and recorded; tools with side effects stop the run
-for human approval. Both run on a laptop against a deterministic mock model, and
-on OpenShift AI against a KServe InferenceService running vLLM with tool calling.
-Measured gateway overhead is about 1.5–1.7 ms per request at low concurrency.
+for human approval. The stack runs on a laptop against a deterministic mock
+model; OpenShift AI / KServe manifests target a vLLM InferenceService with tool
+calling. Measured gateway overhead is about 1.5–1.7 ms per request at low
+concurrency (laptop, mock upstream).
 
 **Keywords:** AI gateway · agentic microservices · tool calling · vLLM · KServe ·
 OpenShift AI · rate limiting · observability · human oversight

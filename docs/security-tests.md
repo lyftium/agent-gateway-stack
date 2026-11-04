@@ -13,6 +13,8 @@
 | Schema / domain gates | OOD ISA altitude rejected; unit mismatch refused | `tests/test_tools.py` |
 | Tool output as data | Invalid args fed back to the model as tool errors, not elevated privileges | `tests/test_agent.py` |
 | Prompt-injection posture | Injected `bash` / privileged tool names → unknown-tool error; side-effect tools still `awaiting_approval` | `tests/test_prompt_injection_posture.py` |
+| Closed allowlist | `ALLOWED_TOOL_NAMES` == `TOOLS`; schemas never advertise other names | `tests/test_allowlist_idempotency.py` |
+| Approve-once idempotency | `execute_approved` accepts once per fingerprint; second call → `duplicate` | `tests/test_allowlist_idempotency.py` + `agent/approval.py` |
 
 ## Prompt injection posture (engineering)
 

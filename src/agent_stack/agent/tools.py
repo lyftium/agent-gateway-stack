@@ -145,6 +145,16 @@ class Tool:
         }
 
 
+# Closed allowlist: the agent loop may only invoke names in this set.
+ALLOWED_TOOL_NAMES: frozenset[str] = frozenset(
+    {
+        "isa_atmosphere",
+        "convert_units",
+        "tolerance_stackup",
+        "submit_simulation_job",
+    }
+)
+
 TOOLS: dict[str, Tool] = {
     t.name: t
     for t in (
@@ -179,3 +189,8 @@ TOOLS: dict[str, Tool] = {
         ),
     )
 }
+
+if set(TOOLS) != ALLOWED_TOOL_NAMES:
+    raise RuntimeError(
+        f"TOOLS registry drifted from allowlist: {sorted(set(TOOLS) ^ ALLOWED_TOOL_NAMES)}"
+    )

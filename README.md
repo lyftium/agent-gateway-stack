@@ -173,3 +173,7 @@ kustomize build deploy/overlays/openshift-ai | oc apply -f -
 5. Regulation (EU) 2024/1689 (AI Act), Articles 12 and 14.
 
 MIT License.
+
+## Physics tools
+
+ISA helpers ship with an analytical-baseline validation note: [`docs/physics-validation.md`](docs/physics-validation.md). Domain gates and CI point tests belong with the tools, not in the LLM.

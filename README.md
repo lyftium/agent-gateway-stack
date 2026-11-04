@@ -183,6 +183,7 @@ ISA helpers ship with an analytical-baseline validation note: [`docs/physics-val
 
 - Agent / gateway boundary map: [`docs/security-tests.md`](docs/security-tests.md)
 - ISA analytical baselines (pytest): [`docs/physics-validation.md`](docs/physics-validation.md)
+- Verification vs validation: [`docs/vnv.md`](docs/vnv.md)
 
 ## Laptop smoke
 

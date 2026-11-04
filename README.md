@@ -182,3 +182,7 @@ ISA helpers ship with an analytical-baseline validation note: [`docs/physics-val
 
 - Agent / gateway boundary map: [`docs/security-tests.md`](docs/security-tests.md)
 - ISA analytical baselines (pytest): [`docs/physics-validation.md`](docs/physics-validation.md)
+
+## Laptop smoke
+
+Local `pytest` on this repo: **48 passed** (gateway, agent, tools, prompt-injection posture). Docker Compose image builds require Docker Hub access.

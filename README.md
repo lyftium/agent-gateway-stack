@@ -12,14 +12,14 @@ Kubernetes / OpenShift AI manifests for vLLM behind KServe.
 ![KServe](https://img.shields.io/badge/KServe-InferenceService-326CE5?logo=kubernetes&logoColor=white)
 ![OpenShift manifests](https://img.shields.io/badge/OpenShift_AI_manifests-6B7280?logo=redhatopenshift&logoColor=white)
 ![Prometheus](https://img.shields.io/badge/Prometheus-metrics-E6522C?logo=prometheus&logoColor=white)
-![tests](https://img.shields.io/badge/tests-55_local-lightgrey)
+![tests](https://img.shields.io/badge/tests-55+_local-lightgrey)
 
 | | |
 |:--|:--|
 | **Problem** | Every client re-implements keys, quotas, routing and logging; agents add opaque tool loops on top. |
-| **Verify** | `pip install -e '.[dev]' && pytest` (allowlist + approve-once idempotency + ISA + injection posture) · `docker compose up --build` · `make validate` |
+| **Verify** | `pip install -e '.[dev]' && pytest` (allowlist + approve-once idempotency + ISA + injection posture) · `docker compose up --build` · `make validate` · GHCR digest in `docs/image-digests.md` |
 | **CI** | ![CI](https://github.com/lyftium/agent-gateway-stack/actions/workflows/ci.yml/badge.svg) — workflow live under [`.github/workflows/ci.yml`](.github/workflows/ci.yml) |
-| **Status & limits** | Laptop + mock model measured (~1.5 ms gateway overhead). OpenShift AI / KServe manifests prepared and schema-validated; **not applied to a live cluster**. CI **enabled** on `main` (see badge). |
+| **Status & limits** | Laptop + mock model (~1.5 ms gateway overhead). OpenShift AI / KServe manifests schema-validated; **not applied live**. CI **enabled**. GHCR `sha256:660b84b00aa62e883af7c5f487b312c7919d69000b1d4ad2f52a1f9ffd3164d8` ([`docs/image-digests.md`](docs/image-digests.md)). |
 | **Next** | Deploy on OpenShift AI; shared multi-replica quotas; tool-calling accuracy with a real model. |
 
 ## Abstract
@@ -42,6 +42,10 @@ concurrency (laptop, mock upstream).
 
 **Keywords:** AI gateway · agentic microservices · tool calling · vLLM · KServe ·
 OpenShift AI · rate limiting · observability · human oversight
+
+## Trust boundaries (agent side)
+
+The model may **propose** a tool call; the service **decides**. Tool names are allowlisted (`ALLOWED_TOOL_NAMES`); arguments are schema-validated; side-effect tools stop for human approval with **approve-once idempotency** (`POST /v1/agent/approvals`). Prompt-injection posture tests and an ISA physics refuse path keep “demo agent” claims bounded — see [`docs/vnv.md`](docs/vnv.md).
 
 ## 1. Architecture
 
@@ -157,7 +161,7 @@ kustomize build deploy/overlays/openshift-ai | oc apply -f -
 | Lint | `ruff check`, `ruff format --check` | clean |
 | Core manifests | rendered overlays against Kubernetes 1.30 strict JSON schemas | all objects valid (kind: 19, OpenShift AI: 17 core) |
 | Custom resources | [`scripts/validate_crds.py`](scripts/validate_crds.py) against KServe v0.21.0 and OpenShift Route CRDs, unknown fields rejected | Route, ServingRuntime, InferenceService valid; a typo control is rejected |
-| CI | [`ci/github-actions-ci.yml`](ci/github-actions-ci.yml): tests, `make validate`, image build, compose end-to-end | written, not enabled yet (needs a token with `workflow` scope) |
+| CI / GHCR | [`.github/workflows/ci.yml`](.github/workflows/ci.yml): tests, validate, image smoke, push on `main` | **enabled**; digest recorded |
 
 ## 7. Not done
 

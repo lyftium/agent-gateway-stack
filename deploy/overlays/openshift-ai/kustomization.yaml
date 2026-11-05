@@ -22,3 +22,4 @@ images:
   - name: agent-gateway-stack
     newName: ghcr.io/lyftium/agent-gateway-stack
     newTag: "0.1.0"
+    digest: sha256:660b84b00aa62e883af7c5f487b312c7919d69000b1d4ad2f52a1f9ffd3164d8

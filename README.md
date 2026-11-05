@@ -103,7 +103,7 @@ record with code version, prompt hash, model alias and tool versions.
 Failure handling is tested case by case: unknown tool, malformed JSON, arguments
 out of range, tool raising, loop not converging, gateway quota exceeded, wrong
 API key. None of them crash a run; each becomes either a message the model can
-correct or a clear HTTP error for the caller.
+correct or a clear HTTP error for the caller. Interview-facing failure themes covered by tests/docs: **side effect without approval** (stop), **injection posture**, **ISA refuse / physics gate**, gateway **authz/quota** — see [`docs/security-tests.md`](docs/security-tests.md) and [`docs/vnv.md`](docs/vnv.md).
 
 ## 4. Measurements
 

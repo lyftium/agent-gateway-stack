@@ -17,9 +17,9 @@ Kubernetes / OpenShift AI manifests for vLLM behind KServe.
 | | |
 |:--|:--|
 | **Problem** | Every client re-implements keys, quotas, routing and logging; agents add opaque tool loops on top. |
-| **Verify** | `pytest` (allowlist + approve-once + ISA + injection) · `make validate` · Kind Ready evidence · GHCR digest |
+| **Verify** | `pytest` (allowlist + approve-once + ISA + injection) · `make validate` · Kind Ready + agent-run evidence · GHCR digest · [`DEMO.md`](DEMO.md) |
 | **CI** | ![CI](https://github.com/lyftium/agent-gateway-stack/actions/workflows/ci.yml/badge.svg) — workflow live under [`.github/workflows/ci.yml`](.github/workflows/ci.yml) |
-| **Status & limits** | Laptop + mock (~1.5 ms). Kind Ready for mock-llm / gateway / agent ([`docs/evidence/kind-apply/`](docs/evidence/kind-apply/)). OpenShift AI **not** applied live. CI **enabled**. GHCR `sha256:660b84b00aa62e883af7c5f487b312c7919d69000b1d4ad2f52a1f9ffd3164d8`. |
+| **Status & limits** | Laptop + mock (~1.5 ms). Kind Ready + ISA / approve-once agent-run ([`docs/evidence/kind-apply/`](docs/evidence/kind-apply/)). OpenShift AI **not** applied live. CI **enabled**. GHCR `sha256:660b84b00aa62e883af7c5f487b312c7919d69000b1d4ad2f52a1f9ffd3164d8`. |
 | **Next** | Deploy on OpenShift AI; shared multi-replica quotas; tool-calling accuracy with a real model. |
 
 ## Abstract
@@ -165,11 +165,11 @@ kustomize build deploy/overlays/openshift-ai | oc apply -f -
 
 ## 7. Not done
 
-- Not yet applied to a live OpenShift cluster; the image is not yet published to a registry.
+- Not yet applied to a live OpenShift cluster (Kind Ready + GHCR digest are the honesty ceiling today).
 - Quotas are per replica (see design notes); a shared limiter (Limitador/Redis) is the next step.
 - No tool-calling accuracy evaluation with a real model. The mock proves the
   plumbing, not the model's judgement.
-- Paused runs are not resumable: after approval the caller re-submits.
+- Paused runs are not resumable: after approval the caller re-submits (approve endpoint is idempotent; the loop does not auto-resume).
 
 ## References
 

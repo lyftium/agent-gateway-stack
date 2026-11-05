@@ -1,0 +1,45 @@
+# AGS Kind agent-run evidence
+recorded_at: 2026-11-04 19:04:55 PST (America/Los_Angeles)
+cluster: kind-drw (shared with DRS)
+image: agent-gateway-stack:dev ← ghcr.io/lyftium/agent-gateway-stack@sha256:660b84b00aa62e883af7c5f487b312c7919d69000b1d4ad2f52a1f9ffd3164d8
+method: kubectl port-forward pod/agent … 18080:8080 (service listens on :80 → container :8080)
+note: RO root FS — no kubectl cp into /tmp; host-side curl via port-forward
+
+## Cluster snapshot
+NAME                             READY   STATUS    RESTARTS   AGE
+pod/agent-545fcb8b98-t4pqn       1/1     Running   0          23m
+pod/ai-gateway-b95d467fc-d7tnh   1/1     Running   0          23m
+pod/mock-llm-84887c9c88-pjbqc    1/1     Running   0          23m
+
+## agent /readyz
+{"status":"ready","model":"chat","tools":["convert_units","isa_atmosphere","submit_simulation_job","tolerance_stackup"]}
+
+## 1. ISA tool path — POST /v1/agent/runs
+task: "Air density at 11000 m in the ISA model?"
+status: completed
+tool: isa_atmosphere → ok
+result: altitude_m=11000 temperature_k=216.65 pressure_pa=22632 density_kg_m3=0.36392 speed_of_sound_m_s=295.07
+model_calls: 2 · duration_ms: 318.8
+run_id: a1005519ad024f4a88b3795fed4ac9f2
+git_sha: d36557c4b6530c149004b312a3693b215d4851ee
+
+## 2. Side-effect stop — POST /v1/agent/runs
+task: "Submit a simulation job named kind-demo-job"
+status: awaiting_approval
+tool: submit_simulation_job → approval_required
+pending_call: {"tool":"submit_simulation_job","arguments":{"case_name":"wing-section","solver":"fea","mesh_cells":100000},"tool_version":"1.0"}
+run_id: 4977da658d3e47ab9d18ed1baaeb11e0
+
+## 3. Approve-once #1 — POST /v1/agent/approvals
+body: {"tool":"submit_simulation_job","arguments":{"case_name":"wing-section","solver":"fea","mesh_cells":100000},"approved_by":"kind-demo-operator"}
+status: accepted
+idempotency_key: e63cff7ba52ee009f7dbe60c1ee3bc03e7353c4c036c7c969417c4def813bade
+job_id: job-e63cff7ba52e
+
+## 4. Approve-once #2 (same body) — idempotent duplicate
+status: duplicate
+idempotency_key: e63cff7ba52ee009f7dbe60c1ee3bc03e7353c4c036c7c969417c4def813bade
+
+## Claim boundary
+Kind + mock-llm proves allowlist / ISA / approve-once plumbing on a shared cluster.
+Does NOT claim tool-calling accuracy with a real model, live OpenShift AI, or multi-replica shared quotas.

@@ -9,5 +9,7 @@ Cluster: shared Kind `drw`. Image: `agent-gateway-stack:dev` retagged from GHCR 
 | `ai-gateway` Ready | **1/1** (HPA removed; scaled to 1 for single-node Kind) |
 | `agent` Ready | **1/1** (scaled to 1) |
 | `/readyz` gateway + agent | **OK** |
+| Agent ISA run (`POST /v1/agent/runs`) | **completed** (density 0.36392 kg/m³ @ 11 km) |
+| Side-effect stop → approve-once | **awaiting_approval** → **accepted** → **duplicate** |
 
-Transcript: [`kind-apply/`](kind-apply/).
+Transcript: [`kind-apply/`](kind-apply/) (Ready + [`agent-run-20261104-190455.txt`](kind-apply/agent-run-20261104-190455.txt)).

@@ -21,3 +21,16 @@ secretGenerator:
 images:
   - name: agent-gateway-stack
     newTag: dev
+patches:
+  - path: delete-hpa.yaml
+  - target: { kind: Deployment, name: ai-gateway }
+    patch: |-
+      - op: replace
+        path: /spec/replicas
+        value: 1
+  - target: { kind: Deployment, name: agent }
+    patch: |-
+      - op: replace
+        path: /spec/replicas
+        value: 1
+

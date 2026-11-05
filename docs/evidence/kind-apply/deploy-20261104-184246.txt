@@ -1,0 +1,45 @@
+# AGS Kind apply evidence
+recorded_at: 2026-11-04 18:42:46 PST
+cluster: kind-drw (shared with DRS)
+image: agent-gateway-stack:dev retagged from ghcr.io/lyftium/agent-gateway-stack@sha256:660b84b00aa62e883af7c5f487b312c7919d69000b1d4ad2f52a1f9ffd3164d8
+note: HPA deleted and replicas scaled to 1 for single-node Kind (cpu metric unknown)
+
+NAME                         READY   UP-TO-DATE   AVAILABLE   AGE    CONTAINERS   IMAGES                    SELECTOR
+deployment.apps/agent        1/1     1            1           106s   agent        agent-gateway-stack:dev   app.kubernetes.io/name=agent
+deployment.apps/ai-gateway   1/1     1            1           106s   gateway      agent-gateway-stack:dev   app.kubernetes.io/name=ai-gateway
+deployment.apps/mock-llm     1/1     1            1           106s   mock-llm     agent-gateway-stack:dev   app.kubernetes.io/name=mock-llm
+
+NAME                             READY   STATUS        RESTARTS      AGE    IP            NODE                NOMINATED NODE   READINESS GATES
+pod/agent-545fcb8b98-j6gxz       0/1     Terminating   1 (46s ago)   106s   10.244.0.12   drw-control-plane   <none>           <none>
+pod/agent-545fcb8b98-t4pqn       1/1     Running       0             106s   10.244.0.14   drw-control-plane   <none>           <none>
+pod/ai-gateway-b95d467fc-d7tnh   1/1     Running       0             106s   10.244.0.15   drw-control-plane   <none>           <none>
+pod/mock-llm-84887c9c88-pjbqc    1/1     Running       0             106s   10.244.0.13   drw-control-plane   <none>           <none>
+
+NAME                 TYPE        CLUSTER-IP      EXTERNAL-IP   PORT(S)   AGE    SELECTOR
+service/agent        ClusterIP   10.96.159.243   <none>        80/TCP    106s   app.kubernetes.io/name=agent
+service/ai-gateway   ClusterIP   10.96.182.198   <none>        80/TCP    106s   app.kubernetes.io/name=ai-gateway
+service/mock-llm     ClusterIP   10.96.82.24     <none>        80/TCP    106s   app.kubernetes.io/name=mock-llm
+
+=== mock-llm ===
+1/1 
+[{"lastTransitionTime":"2026-11-05T02:41:33Z","lastUpdateTime":"2026-11-05T02:41:33Z","message":"Deployment has minimum availability.","reason":"MinimumReplicasAvailable","status":"True","type":"Available"},{"lastTransitionTime":"2026-11-05T02:41:01Z","lastUpdateTime":"2026-11-05T02:41:33Z","message":"ReplicaSet \"mock-llm-84887c9c88\" has successfully progressed.","reason":"NewReplicaSetAvailable","status":"True","type":"Progressing"}]
+
+=== ai-gateway ===
+1/1 
+[{"lastTransitionTime":"2026-11-05T02:41:45Z","lastUpdateTime":"2026-11-05T02:41:45Z","message":"Deployment has minimum availability.","reason":"MinimumReplicasAvailable","status":"True","type":"Available"},{"lastTransitionTime":"2026-11-05T02:41:01Z","lastUpdateTime":"2026-11-05T02:41:45Z","message":"ReplicaSet \"ai-gateway-b95d467fc\" has successfully progressed.","reason":"NewReplicaSetAvailable","status":"True","type":"Progressing"}]
+
+=== agent ===
+1/1 
+[{"lastTransitionTime":"2026-11-05T02:42:21Z","lastUpdateTime":"2026-11-05T02:42:21Z","message":"Deployment has minimum availability.","reason":"MinimumReplicasAvailable","status":"True","type":"Available"},{"lastTransitionTime":"2026-11-05T02:41:01Z","lastUpdateTime":"2026-11-05T02:42:21Z","message":"ReplicaSet \"agent-545fcb8b98\" has successfully progressed.","reason":"NewReplicaSetAvailable","status":"True","type":"Progressing"}]
+
+=== readyz ===
+{"status":"ready","routes":["chat"]}
+
+== re-smoke Running pods ==
+gw=ai-gateway-b95d467fc-d7tnh ag=agent-545fcb8b98-t4pqn
+gateway {"status":"ready","routes":["chat"]}
+agent {"status":"ready","model":"chat","tools":["convert_units","isa_atmosphere","submit_simulation_job","tolerance_stackup"]}
+NAME         READY   UP-TO-DATE   AVAILABLE   AGE     CONTAINERS   IMAGES                    SELECTOR
+agent        1/1     1            1           2m13s   agent        agent-gateway-stack:dev   app.kubernetes.io/name=agent
+ai-gateway   1/1     1            1           2m13s   gateway      agent-gateway-stack:dev   app.kubernetes.io/name=ai-gateway
+mock-llm     1/1     1            1           2m13s   mock-llm     agent-gateway-stack:dev   app.kubernetes.io/name=mock-llm

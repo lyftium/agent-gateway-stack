@@ -17,9 +17,9 @@ Kubernetes / OpenShift AI manifests for vLLM behind KServe.
 | | |
 |:--|:--|
 | **Problem** | Every client re-implements keys, quotas, routing and logging; agents add opaque tool loops on top. |
-| **Verify** | `pip install -e '.[dev]' && pytest` (allowlist + approve-once idempotency + ISA + injection posture) · `docker compose up --build` · `make validate` · GHCR digest in `docs/image-digests.md` |
+| **Verify** | `pytest` (allowlist + approve-once + ISA + injection) · `make validate` · Kind Ready evidence · GHCR digest |
 | **CI** | ![CI](https://github.com/lyftium/agent-gateway-stack/actions/workflows/ci.yml/badge.svg) — workflow live under [`.github/workflows/ci.yml`](.github/workflows/ci.yml) |
-| **Status & limits** | Laptop + mock model (~1.5 ms gateway overhead). OpenShift AI / KServe manifests schema-validated; **not applied live**. CI **enabled**. GHCR `sha256:660b84b00aa62e883af7c5f487b312c7919d69000b1d4ad2f52a1f9ffd3164d8` ([`docs/image-digests.md`](docs/image-digests.md)). |
+| **Status & limits** | Laptop + mock (~1.5 ms). Kind Ready for mock-llm / gateway / agent ([`docs/evidence/kind-apply/`](docs/evidence/kind-apply/)). OpenShift AI **not** applied live. CI **enabled**. GHCR `sha256:660b84b00aa62e883af7c5f487b312c7919d69000b1d4ad2f52a1f9ffd3164d8`. |
 | **Next** | Deploy on OpenShift AI; shared multi-replica quotas; tool-calling accuracy with a real model. |
 
 ## Abstract

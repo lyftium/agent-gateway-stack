@@ -20,6 +20,7 @@ Kubernetes / OpenShift AI manifests for vLLM behind KServe.
 | **Verify** | `pytest` (allowlist + approve-once + ISA + injection) · `make validate` · Kind Ready + agent-run evidence · GHCR digest · [`docs/DEMO.md`](docs/DEMO.md) |
 | **CI** | ![CI](https://github.com/lyftium/agent-gateway-stack/actions/workflows/ci.yml/badge.svg) — workflow live under [`.github/workflows/ci.yml`](.github/workflows/ci.yml) |
 | **Status & limits** | Laptop + mock (~1.5 ms). Kind Ready + ISA / approve-once agent-run ([`docs/evidence/kind-apply/`](docs/evidence/kind-apply/)). OpenShift AI **not** applied live. CI **enabled**. GHCR `sha256:660b84b00aa62e883af7c5f487b312c7919d69000b1d4ad2f52a1f9ffd3164d8`. |
+| **Serving path** | Pair with [vllm-serving-benchmark-t4](https://github.com/lyftium/vllm-serving-benchmark-t4) (measured levers) and DRS `deploy/kserve/` (InferenceService prep). This repo = OpenAI-compatible **gateway** + agent; Kind uses **mock-llm**, not live GPU. |
 | **Next** | Deploy on OpenShift AI; shared multi-replica quotas; tool-calling accuracy with a real model. |
 
 ## Abstract

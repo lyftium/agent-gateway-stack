@@ -3,7 +3,7 @@
 | Kind | Question | What we run |
 |---|---|---|
 | **Verification** | Did we build the tool right? | Analytical ISA baselines (`docs/physics-validation.md`), unit conversions against known factors, pydantic schema rejects, allowlist misses |
-| **Validation** | Is it fit for a real engineering workflow? | **Not claimed** for flight/programme use. Laptop mock-model runs only; OpenShift manifests prepared, not applied |
+| **Validation** | Is it fit for a real engineering workflow? | **Not claimed** for flight/programme use. Local mock-model runs only; additional cluster overlays not applied |
 
 ## Domain refusal (verification)
 
@@ -12,4 +12,4 @@
 - Side-effect tools never execute without `POST /v1/agent/approvals` (approve-once).
 
 OOD / programme validation against wind-tunnel or fleet data is out of scope for this
-public demonstrator — say so in interviews rather than implying fitness.
+public demonstrator; do not imply deployment fitness.

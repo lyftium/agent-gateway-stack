@@ -2,25 +2,23 @@
 
 ![CI](https://github.com/lyftium/agent-gateway-stack/actions/workflows/ci.yml/badge.svg)
 
-Shared LLM plumbing so every client doesn’t re-implement keys, quotas, and routing — plus a bounded tool-calling agent that other services can call.
+Every client that talks to a self-hosted LLM tends to reinvent keys, quotas, and routing. Agents make it worse: opaque tool loops nobody can audit. This repo puts that plumbing in two services.
 
-Two services:
+1. **Gateway** — OpenAI-compatible. Auth by key hash, per-tenant request and token quotas, model aliases with failover, streaming pass-through, metrics, logs without prompt text.
+2. **Agent** — reaches models only through the gateway. Allowlisted tools, typed schemas, timeouts; side-effect tools stop for **approve-once** human approval.
 
-1. **Gateway** — OpenAI-compatible: auth by key hash, per-tenant request/token quotas, model aliases with failover, streaming pass-through, metrics, logs without prompt text.
-2. **Agent** — reaches models only through the gateway; allowlisted tools, typed schemas, timeouts; side-effect tools stop for **approve-once** human approval.
+> **Start here:** [`docs/DEMO.md`](docs/DEMO.md) · Kind Ready + agent-run under [`docs/evidence/kind-apply/`](docs/evidence/kind-apply/)  
+> **Stack:** FastAPI · Docker · Kubernetes / OpenShift overlays · KServe vLLM manifests · Prometheus  
+> **Proven:** pytest (allowlist / approve-once / ISA / injection) · Kind against **mock-llm** · GHCR `sha256:660b84b00aa62e883af7c5f487b312c7919d69000b1d4ad2f52a1f9ffd3164d8` · gateway overhead ≈ **1.5 ms** p50 at concurrency 1 (laptop, mock)  
+> **Not claimed:** live GPU OpenShift · tool-calling accuracy with a real model
 
-| | |
-|:--|:--|
-| **90 s path** | [`docs/DEMO.md`](docs/DEMO.md) · Kind Ready + agent-run under [`docs/evidence/kind-apply/`](docs/evidence/kind-apply/) |
-| **Stack** | FastAPI · Docker · Kubernetes / OpenShift overlays · KServe vLLM ServingRuntime (manifests) · Prometheus |
-| **Proven here** | pytest (allowlist / approve-once / ISA / injection) · Kind against **mock-llm** · GHCR `sha256:660b84b00aa62e883af7c5f487b312c7919d69000b1d4ad2f52a1f9ffd3164d8` · gateway overhead ≈ **1.5 ms** p50 at concurrency 1 (laptop, mock) |
-| **Not claimed** | Live GPU OpenShift · tool-calling accuracy with a real model |
+Measured serving levers: [vllm-serving-benchmark-t4](https://github.com/lyftium/vllm-serving-benchmark-t4). KServe packaging also in [drawing-review-service](https://github.com/lyftium/drawing-review-service) `deploy/kserve/`. This repo is the front door and the agent.
 
-Serving path: measured levers in [vllm-serving-benchmark-t4](https://github.com/lyftium/vllm-serving-benchmark-t4); KServe packaging also in [drawing-review-service](https://github.com/lyftium/drawing-review-service) `deploy/kserve/`. This repo is the **front door + agent**.
+[Trust](#trust-boundary) · [Architecture](#architecture) · [Gateway](#gateway) · [Agent](#agent) · [Measurements](#measurements) · [Deploy](#deploy) · [Status](#status)
 
 ## Trust boundary
 
-The model may **propose** a tool call; the service **decides**. Tool names are allowlisted; arguments are schema-validated; side effects wait on `POST /v1/agent/approvals` (idempotent). Prompt-injection posture tests and an ISA physics refuse path keep the demo bounded — [`docs/vnv.md`](docs/vnv.md).
+The model may **propose** a tool call; the service **decides**. Tool names are allowlisted; arguments are schema-validated; side effects wait on `POST /v1/agent/approvals` (idempotent). Prompt-injection posture tests and an ISA physics refuse path keep the demo bounded — see [`docs/vnv.md`](docs/vnv.md).
 
 ## Architecture
 
@@ -44,7 +42,7 @@ flowchart LR
 
 Design notes: [`docs/design.md`](docs/design.md). Agent loop: [`docs/agent.md`](docs/agent.md).
 
-## Gateway behaviour
+## Gateway
 
 | Concern | Behaviour |
 |---|---|
@@ -54,9 +52,9 @@ Design notes: [`docs/design.md`](docs/design.md). Agent loop: [`docs/agent.md`](
 | Quotas | token buckets for req/min and tokens/min; `429` + `Retry-After` |
 | Routing | alias → ordered upstreams; connection / 5xx fail over; 4xx as-is |
 | Streaming | bytes forwarded unchanged; `include_usage` forced for accounting |
-| Logs | one JSON line: tenant, model, upstream, status, latency, TTFT, tokens — **no content** (tested) |
+| Logs | one JSON line: tenant, model, upstream, status, latency, TTFT, tokens — no content (tested) |
 
-## Agent tools
+## Agent
 
 | Tool | Purpose | Verified against |
 |---|---|---|
@@ -90,7 +88,7 @@ deploy/
     └── openshift-ai/        Route, SCC-friendly policy, KServe component
 ```
 
-Containers: non-root, read-only root, no capabilities, `RuntimeDefault` seccomp. No fixed UID — works with OpenShift `restricted-v2` and Pod Security `restricted`.
+Containers run non-root, read-only root, no capabilities, `RuntimeDefault` seccomp. No fixed UID — works with OpenShift `restricted-v2` and Pod Security `restricted`.
 
 ```bash
 docker compose up --build
@@ -101,21 +99,21 @@ curl -s localhost:8000/v1/agent/runs -H 'content-type: application/json' \
 kustomize build deploy/overlays/openshift-ai | oc apply -f -
 ```
 
-## Verification
+## Status
 
-| Check | How | Status |
+| Check | How | Result |
 |---|---|---|
 | Unit + integration | `pytest` | 55 passing |
 | Lint | `ruff check` / `ruff format --check` | clean |
 | Manifests | kubeconform + CRD validator | kind / OpenShift AI objects valid |
 | CI / GHCR | [`.github/workflows/ci.yml`](.github/workflows/ci.yml) | enabled; digest recorded |
 
-## Still open
+Still open:
 
-- Not applied to a live OpenShift GPU cluster (Kind + GHCR is the honesty ceiling today).
-- Quotas are per replica; shared limiter (Limitador / Redis) is next.
-- No tool-calling accuracy eval with a real model — mock proves plumbing.
-- After approval the caller re-submits (approve endpoint is idempotent; loop does not auto-resume).
+- Not applied to a live OpenShift GPU cluster (Kind + GHCR is the honesty ceiling today)
+- Quotas are per replica; a shared limiter (Limitador / Redis) is next
+- No tool-calling accuracy eval with a real model — the mock proves plumbing
+- After approval the caller re-submits (approve endpoint is idempotent; the loop does not auto-resume)
 
 Physics baselines: [`docs/physics-validation.md`](docs/physics-validation.md). V&V split: [`docs/vnv.md`](docs/vnv.md).
 

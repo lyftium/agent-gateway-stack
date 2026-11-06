@@ -7,7 +7,7 @@ Environment: local macOS, Python 3.11, mock upstream (no live vLLM).
 | `pip install -e '.[dev]' && pytest -q` | **48 passed** (gateway, agent, tools, ISA physics, prompt-injection posture) |
 | `make validate` | CRD / manifest schema checks (see Makefile) |
 | `docker compose up --build` | **Blocked** here — Docker Hub DNS refused |
-| OpenShift AI / KServe apply | Manifests schema-validated; **not applied** to a live cluster |
+| Additional cluster overlays | Manifests schema-validated; **not applied** to a GPU-backed cluster |
 
 ## Security / physics pointers
 

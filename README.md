@@ -1,16 +1,14 @@
-# AI gateway & tool-calling agent
+# AI Gateway & Tool-Calling Agent
 
 ![CI](https://github.com/lyftium/agent-gateway-stack/actions/workflows/ci.yml/badge.svg)
 
-Two small services so clients stop reinventing keys and agents stop running side effects unsupervised.
+| | |
+|---|---|
+| **Problem** | Clients re-implement keys, quotas, and routing; agents run side effects without a hard stop. |
+| **Verify** | [`docs/DEMO.md`](docs/DEMO.md) · Kind Ready + agent-run under [`docs/evidence/kind-apply/`](docs/evidence/kind-apply/) · pytest (allowlist / approve-once / ISA) |
+| **Status** | Kind against **mock-llm**; GHCR digest recorded. OpenShift AI **not** live. No claim of tool-calling accuracy with a real model. |
 
-The **gateway** is OpenAI-compatible: key-hash auth, per-tenant quotas, failover, streaming, metrics, logs without prompt text. The **agent** only talks to models through that gateway; tools are allowlisted and schema-checked; anything with a side effect stops for **approve-once** approval.
-
-[`docs/DEMO.md`](docs/DEMO.md) · Kind Ready + agent-run under [`docs/evidence/kind-apply/`](docs/evidence/kind-apply/)
-
-Kind runs against a **mock-llm**. Tests cover allowlist, approve-once, ISA, and injection. GHCR digest is recorded. I have not applied this on a live GPU OpenShift cluster, and I am not claiming tool-calling accuracy with a real model.
-
-On a laptop vs an instant mock (not GPU overhead), the gateway adds about **1.5 ms** p50 at concurrency 1 — [Measurements](#measurements).
+OpenAI-compatible **gateway** (key-hash auth, per-tenant quotas, failover, streaming, metrics, no prompt text in logs) and a bounded **agent** (allowlisted tools, schema-checked args, **approve-once** for side effects). Laptop overhead vs an instant mock ≈ **1.5 ms** p50 at concurrency 1 — [Measurements](#measurements).
 
 Related: [vllm-serving-benchmark-t4](https://github.com/lyftium/vllm-serving-benchmark-t4) · DRS `deploy/kserve/` in [drawing-review-service](https://github.com/lyftium/drawing-review-service).
 

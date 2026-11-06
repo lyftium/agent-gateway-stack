@@ -2,20 +2,17 @@
 
 ![CI](https://github.com/lyftium/agent-gateway-stack/actions/workflows/ci.yml/badge.svg)
 
-OpenAI-compatible gateway with key-hash auth, per-tenant quotas, and failover — plus a bounded tool-calling agent where side effects stop for **approve-once** human approval.
+Two small services so clients stop reinventing keys and agents stop running side effects unsupervised.
 
-[`docs/DEMO.md`](docs/DEMO.md) · Kind Ready + agent-run transcripts under [`docs/evidence/kind-apply/`](docs/evidence/kind-apply/)
+The **gateway** is OpenAI-compatible: key-hash auth, per-tenant quotas, failover, streaming, metrics, logs without prompt text. The **agent** only talks to models through that gateway; tools are allowlisted and schema-checked; anything with a side effect stops for **approve-once** approval.
 
-Two services:
+[`docs/DEMO.md`](docs/DEMO.md) · Kind Ready + agent-run under [`docs/evidence/kind-apply/`](docs/evidence/kind-apply/)
 
-1. **Gateway** — auth by key hash, request/token quotas, model aliases with failover, streaming pass-through, metrics, logs without prompt text.
-2. **Agent** — reaches models only through the gateway; allowlisted tools, typed schemas, timeouts; side-effect tools wait on `POST /v1/agent/approvals`.
+Kind runs against a **mock-llm**. Tests cover allowlist, approve-once, ISA, and injection. GHCR digest is recorded. I have not applied this on a live GPU OpenShift cluster, and I am not claiming tool-calling accuracy with a real model.
 
-FastAPI · Docker · Kubernetes / OpenShift overlays · KServe vLLM manifests · Prometheus. Tests cover allowlist, approve-once, ISA, and injection. Kind runs against **mock-llm**. GHCR digest recorded. Not claimed: live GPU OpenShift, or tool-calling accuracy with a real model.
+On a laptop vs an instant mock (not GPU overhead), the gateway adds about **1.5 ms** p50 at concurrency 1 — [Measurements](#measurements).
 
-Laptop microbench vs an instant mock (not GPU serving overhead): gateway adds about **1.5 ms** p50 at concurrency 1 — see [Measurements](#measurements).
-
-Serving levers: [vllm-serving-benchmark-t4](https://github.com/lyftium/vllm-serving-benchmark-t4). KServe packaging also in [drawing-review-service](https://github.com/lyftium/drawing-review-service) `deploy/kserve/`.
+Related: [vllm-serving-benchmark-t4](https://github.com/lyftium/vllm-serving-benchmark-t4) · DRS `deploy/kserve/` in [drawing-review-service](https://github.com/lyftium/drawing-review-service).
 
 [Trust](#trust-boundary) · [Architecture](#architecture) · [Gateway](#gateway) · [Agent](#agent) · [Measurements](#measurements) · [Deploy](#deploy) · [Status](#status)
 

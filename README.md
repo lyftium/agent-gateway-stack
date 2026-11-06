@@ -1,14 +1,12 @@
-# AI Gateway & Tool-Calling Agent
+# AI gateway and tool-calling agent
 
 ![CI](https://github.com/lyftium/agent-gateway-stack/actions/workflows/ci.yml/badge.svg)
 
-| | |
-|---|---|
-| **Problem** | Clients re-implement keys, quotas, and routing; agents run side effects without a hard stop. |
-| **Verify** | [`docs/DEMO.md`](docs/DEMO.md) · Kind Ready + agent-run under [`docs/evidence/kind-apply/`](docs/evidence/kind-apply/) · pytest (allowlist / approve-once / ISA) |
-| **Status** | Kind against **mock-llm**; GHCR digest recorded. OpenShift AI **not** live. No claim of tool-calling accuracy with a real model. |
+Clients keep reimplementing API keys, quotas, and routing, and a tool-calling loop will run a side effect if nothing stops it. I built two small services: an OpenAI-compatible gateway (key hash, per-tenant quotas, failover, streaming, metrics, no prompt text in the logs) and an agent that may only call allowlisted tools. A call with a side effect waits for one approval.
 
-OpenAI-compatible **gateway** (key-hash auth, per-tenant quotas, failover, streaming, metrics, no prompt text in logs) and a bounded **agent** (allowlisted tools, schema-checked args, **approve-once** for side effects). Laptop overhead vs an instant mock ≈ **1.5 ms** p50 at concurrency 1 — [Measurements](#measurements).
+I tested this on a local Kind cluster against a mock model, including an approve-once transcript under [`docs/evidence/kind-apply/`](docs/evidence/kind-apply/). Against that instant mock, gateway overhead was about 1.5 ms at the median, concurrency 1 — that is not inference latency. OpenShift files are prepared; I have not applied them on a live GPU cluster, and I am not claiming tool-calling accuracy with a real model.
+
+Walkthrough: [`docs/DEMO.md`](docs/DEMO.md).
 
 Related: [vllm-serving-benchmark-t4](https://github.com/lyftium/vllm-serving-benchmark-t4) · DRS `deploy/kserve/` in [drawing-review-service](https://github.com/lyftium/drawing-review-service).
 

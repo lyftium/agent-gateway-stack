@@ -76,22 +76,9 @@ and token usage. With the gateway's `x-gateway-upstream` header and log line
 under the same request id, a run can be traced to the code version, the prompt
 version, the concrete model that answered and each tool call it made.
 
-## Mapping to the EU AI Act
-
-This is not a compliance claim. Obligations depend on the system's risk class
-and role, which a demo service does not have. The mechanisms are the ones those
-obligations ask for:
-
-| Obligation (Regulation (EU) 2024/1689) | Mechanism here |
-|---|---|
-| Record-keeping, automatic logging over the system's lifetime (Art. 12) | run record + per-step trace; gateway request log; both keyed by request id |
-| Human oversight, ability to intervene before effects (Art. 14) | `requires_approval` tools stop the run and return the proposed call |
-| Accuracy and robustness (Art. 15) | argument validation, bounded loop, tool timeouts, failover in the gateway |
-| Technical documentation and traceability of versions (Art. 11, Annex IV) | git sha, prompt hash, tool versions, model alias + upstream in every record |
-
 ## What is not here
 
 - Persisting run records (they are returned and logged; a store is deployment-specific).
-- An approval endpoint that resumes a paused run. Today the caller re-submits after a human approves.
+- Independent operator authentication on the approval endpoint, real queue execution, or resuming a paused run. The demo records an accepted intent; the caller re-submits after review.
 - Evaluation of a real model's tool-calling accuracy. The mock model is a test
   double: it proves the plumbing, not the model's judgement.

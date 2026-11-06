@@ -1,6 +1,6 @@
 # Security / agent-boundary tests (public proof map)
 
-**Status.** Maps pack-style agent threats to **existing** pytest in this repo. Not a penetration test or AI Act claim.
+**Status.** Maps pack-style agent threats to **existing** pytest in this repo. Not a penetration test or comprehensive security proof.
 
 | Threat theme | What we assert | Where |
 |---|---|---|
@@ -20,7 +20,7 @@
 
 - Treat documents and tool outputs as **untrusted data**, not as authorisation.
 - The agent loop never executes arbitrary shell or network tools from this catalogue.
-- Side effects require human approval before execution.
+- Side-effect-shaped calls stop for review; the demo approval records intent without independent operator authentication or real job execution.
 - Adding a new tool = new typed schema + tests for reject paths + approval flag review.
 
 ## Verify
@@ -32,7 +32,7 @@ pytest tests/test_gateway.py tests/test_agent.py tests/test_tools.py tests/test_
 
 ## Limits
 
-- Laptop + mock LLM; not a live OpenShift security assessment.
+- Local mock-LLM tests only; no independent penetration test or real-cluster security assessment.
 - No claim that these tests exhaust prompt-injection catalogues.
 - NetworkPolicy / SCC belong to cluster apply evidence (see drawing-review-service manifests).
 

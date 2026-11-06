@@ -2,9 +2,9 @@
 
 ![CI](https://github.com/lyftium/agent-gateway-stack/actions/workflows/ci.yml/badge.svg)
 
-Clients keep reimplementing API keys, quotas, and routing, and a tool-calling loop will run a side effect if nothing stops it. I built two small services: an OpenAI-compatible gateway (key hash, per-tenant quotas, failover, streaming, metrics, no prompt text in the logs) and an agent that may only call allowlisted tools. A call with a side effect waits for one approval.
+Clients keep reimplementing API keys, quotas, and routing, and a tool-calling loop will run a side effect if nothing stops it. I built two small services: an OpenAI-compatible gateway (key hash, per-tenant quotas, failover, streaming, metrics, no prompt text in the logs) and an agent that may only call allowlisted tools.
 
-I tested this on a local Kind cluster against a mock model, including an approve-once transcript under [`docs/evidence/kind-apply/`](docs/evidence/kind-apply/). Against that instant mock, gateway overhead was about 1.5 ms at the median, concurrency 1 — that is not inference latency. OpenShift files are prepared; I have not applied them on a live GPU cluster, and I am not claiming tool-calling accuracy with a real model.
+A side effect waits on `POST /v1/agent/approvals`. That endpoint records an accepted queue intent; it does not run a real job, and it does not authenticate the operator beyond the string in the request. Quotas are counted per replica, after the response. I tested the loop on a local Kind cluster against a mock model ([`docs/evidence/kind-apply/`](docs/evidence/kind-apply/)). Against that instant mock, added latency was about 1.5 ms at the median and concurrency 1 — that is not inference latency. OpenShift files are schema-checked only.
 
 Walkthrough: [`docs/DEMO.md`](docs/DEMO.md).
 
@@ -90,16 +90,16 @@ Containers run non-root, read-only root, no capabilities, `RuntimeDefault` secco
 docker compose up --build
 curl -s localhost:8000/v1/agent/runs -H 'content-type: application/json' \
   -d '{"task": "Air density at 11000 m in the ISA model?"}'
-
-# OpenShift AI — see header of deploy/overlays/openshift-ai/kustomization.yaml
-kustomize build deploy/overlays/openshift-ai | oc apply -f -
+docker compose down
 ```
+
+The OpenShift overlay under `deploy/overlays/openshift-ai/` is untested. Do not apply it as if it had been run here.
 
 ## Status
 
 | Check | How | Result |
 |---|---|---|
-| Unit + integration | `pytest` | 55 passing |
+| Unit + integration | `pytest` | see the latest CI run |
 | Lint | `ruff check` / `ruff format --check` | clean |
 | Manifests | kubeconform + CRD validator | kind / OpenShift AI objects valid |
 | CI / GHCR | [`.github/workflows/ci.yml`](.github/workflows/ci.yml) | enabled; digest recorded |

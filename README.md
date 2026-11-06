@@ -7,12 +7,11 @@ Every client that talks to a self-hosted LLM tends to reinvent keys, quotas, and
 1. **Gateway** — OpenAI-compatible. Auth by key hash, per-tenant request and token quotas, model aliases with failover, streaming pass-through, metrics, logs without prompt text.
 2. **Agent** — reaches models only through the gateway. Allowlisted tools, typed schemas, timeouts; side-effect tools stop for **approve-once** human approval.
 
-> **Start here:** [`docs/DEMO.md`](docs/DEMO.md) · Kind Ready + agent-run under [`docs/evidence/kind-apply/`](docs/evidence/kind-apply/)  
-> **Stack:** FastAPI · Docker · Kubernetes / OpenShift overlays · KServe vLLM manifests · Prometheus  
-> **Proven:** pytest (allowlist / approve-once / ISA / injection) · Kind against **mock-llm** · GHCR `sha256:660b84b00aa62e883af7c5f487b312c7919d69000b1d4ad2f52a1f9ffd3164d8` · gateway overhead ≈ **1.5 ms** p50 at concurrency 1 (laptop, mock)  
-> **Not claimed:** live GPU OpenShift · tool-calling accuracy with a real model
+**Start here:** [`docs/DEMO.md`](docs/DEMO.md) and the Kind Ready + agent-run transcripts under [`docs/evidence/kind-apply/`](docs/evidence/kind-apply/).
 
-Measured serving levers: [vllm-serving-benchmark-t4](https://github.com/lyftium/vllm-serving-benchmark-t4). KServe packaging also in [drawing-review-service](https://github.com/lyftium/drawing-review-service) `deploy/kserve/`. This repo is the front door and the agent.
+FastAPI services, Docker, Kubernetes / OpenShift overlays, KServe vLLM manifests, Prometheus. Tests cover allowlist, approve-once, ISA, and injection. Kind runs against **mock-llm**; gateway overhead is about **1.5 ms** p50 at concurrency 1 on a laptop mock. GHCR digest is recorded in the repo. Not claimed: live GPU OpenShift, or tool-calling accuracy with a real model.
+
+Measured serving levers live in [vllm-serving-benchmark-t4](https://github.com/lyftium/vllm-serving-benchmark-t4). KServe packaging also in [drawing-review-service](https://github.com/lyftium/drawing-review-service) `deploy/kserve/`.
 
 [Trust](#trust-boundary) · [Architecture](#architecture) · [Gateway](#gateway) · [Agent](#agent) · [Measurements](#measurements) · [Deploy](#deploy) · [Status](#status)
 

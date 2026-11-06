@@ -5,7 +5,7 @@ Walkthrough for a screener. Stick to artefacts in this repo.
 ## 90 seconds
 
 1. **Question:** how do you stop every client reinventing keys, quotas, and opaque tool loops?
-2. Open the README “Start here” block.
+2. Open the README lead (auth, quotas, approve-once).
 3. Point at CI and [`docs/evidence/kind-apply/`](evidence/kind-apply/) (Ready + ISA + approve-once).
 4. **Platform boundary out loud:** OpenShift AI is the **target**; Kind + **mock-llm** is the **proof harness**. Manifests prepared, not live-applied; no real-model tool-accuracy claim.
 

@@ -1,37 +1,28 @@
-# Interview demo — gateway & agent
+# Demo — AI gateway & tool-calling agent
 
-Walkthrough for a screener. Stick to artefacts in this repo.
+Run unit tests and (optionally) Kind against a mock LLM. No claim of tool-calling quality with a real model.
 
-## 90 seconds
+## Prerequisites
 
-1. **Question:** how do you stop every client reinventing keys, quotas, and opaque tool loops?
-2. Open the README **Problem / Verify / Status** table (auth, quotas, approve-once; Kind / mock).
-3. Point at CI and [`docs/evidence/kind-apply/`](evidence/kind-apply/) (Ready + ISA + approve-once).
-4. **Platform boundary out loud:** OpenShift AI is the **target**; Kind + **mock-llm** is the **proof harness**. Manifests prepared, not live-applied; no real-model tool-accuracy claim.
+- Python 3.10+, `make`
+- Optional: Docker, Kind
 
-## Platform boundary
-
-Kind validates gateway + agent plumbing (auth, quotas, approve-once). Overlays include OpenShift AI / KServe-shaped CRs. **Not claimed:** live GPU OpenShift, GPU Operator, or tool-calling quality with a real model.
-
-## 10 minutes
+## Quickstart
 
 ```bash
 python -m pytest -q
 make validate
-# optional if Kind + image available — see README Deploy section
 ```
 
-| Minute | Show | Say |
-|---|---|---|
-| 0–2 | Architecture diagram | Gateway owns auth/quotas; agent owns the bounded tool loop |
-| 2–4 | `pytest` allowlist + approve-once | Model proposes; service decides; side effects stop |
-| 4–6 | Kind agent-run transcript | ISA completed; submit job → awaiting_approval → accepted → duplicate |
-| 6–8 | `docs/vnv.md` | Injection posture + ISA refuse keep claims bounded |
-| 8–9 | GHCR digest + OpenShift overlay | Image published; Route/KServe prepared, not live |
-| 9–10 | Limits | Real-model tool accuracy and shared multi-replica quotas still open |
+**Expected:** allowlist / approve-once / ISA tests pass; manifests validate.
 
-## Do not claim
+## Optional — Kind
 
-- Live OpenShift AI / customer cluster apply
-- Tool-calling accuracy with a real model
-- Shared quotas across replicas (today they are per replica)
+See the README Deploy section. Prior Kind evidence (Ready + agent-run): [`docs/evidence/kind-apply/`](evidence/kind-apply/).
+
+## Limitations
+
+- Kind uses a **mock-llm**
+- OpenShift AI overlays are prepared, not live-applied on GPU
+- Quotas are per-replica today
+- No real-model tool-accuracy claim

@@ -2,68 +2,73 @@
 
 ![CI](https://github.com/lyftium/agent-gateway-stack/actions/workflows/ci.yml/badge.svg)
 
-Clients keep reimplementing API keys, quotas, and routing, and a tool-calling loop will run a side effect if nothing stops it. I built two small services: an OpenAI-compatible gateway (key hash, per-tenant quotas, failover, streaming, metrics, no prompt text in the logs) and an agent that may only call allowlisted tools.
+Clients often reimplement API keys, quotas, and routing around every model service, while a tool-calling loop needs a boundary before side effects. I built two small FastAPI services to investigate those boundaries: an OpenAI-compatible gateway and an agent restricted to typed, allowlisted tools.
 
-A side effect waits on `POST /v1/agent/approvals`. That endpoint records an accepted queue intent; it does not run a real job, and it does not authenticate the operator beyond the string in the request. Quotas are counted per replica, after the response. I tested the loop on a local Kind cluster against a mock model ([`docs/evidence/kind-apply/`](docs/evidence/kind-apply/)). Against that instant mock, added latency was about 1.5 ms at the median and concurrency 1 — that is not inference latency. OpenShift files are schema-checked only.
+This is a demonstrator, not an authorization system for real side effects. The agent stops on an approval-required call, and the approvals endpoint records an accepted intent in an in-memory accept-once ledger. It does not execute a real queue job or automatically resume a run, and the endpoint has no separate operator authentication beyond the supplied operator string and the demo service's deployment boundary.
 
-Walkthrough: [`docs/DEMO.md`](docs/DEMO.md).
+I tested the services on local Kind with a mock model. Measurements describe gateway overhead over that instant backend, not real inference performance. [Walkthrough](docs/DEMO.md).
 
-Related: [vllm-serving-benchmark-t4](https://github.com/lyftium/vllm-serving-benchmark-t4) · DRS `deploy/kserve/` in [drawing-review-service](https://github.com/lyftium/drawing-review-service).
+## Example
 
-[Trust](#trust-boundary) · [Architecture](#architecture) · [Gateway](#gateway) · [Agent](#agent) · [Measurements](#measurements) · [Deploy](#deploy) · [Status](#status)
+The Compose stack runs `agent → gateway → mock-llm` with development-only keys:
 
-## Trust boundary
-
-The model may **propose** a tool call; the service **decides**. Tool names are allowlisted; arguments are schema-validated; side effects wait on `POST /v1/agent/approvals` (idempotent). Prompt-injection posture tests and an ISA physics refuse path keep the demo bounded — see [`docs/vnv.md`](docs/vnv.md).
-
-## Architecture
-
-```mermaid
-flowchart LR
-    U[Users / scripts] -->|Bearer key| G
-    C[Caller] -->|POST /v1/agent/runs| A[Agent service<br/>bounded tool loop]
-    A -->|tenant key| G[AI gateway<br/>auth · quotas · routing · metrics]
-    G -->|alias chat| P1[KServe InferenceService<br/>vLLM + tool calling]
-    G -.->|failover| P2[second upstream]
-    A --> T[(Tools<br/>ISA atmosphere · units ·<br/>tolerance stack-up ·<br/>submit job: approval)]
-    G --> M[(Prometheus)]
-    A --> M
+```bash
+docker compose up --build
+curl -s localhost:8000/v1/agent/runs -H 'content-type: application/json' \
+  -d '{"task": "Air density at 11000 m in the ISA model?"}'
+# Stop with: docker compose down
 ```
 
-| Component | Responsibility | Code |
-|---|---|---|
-| Gateway | auth by key hash, allow-lists, `max_tokens` cap, quotas, failover, SSE pass-through, usage accounting | [`gateway/`](src/agent_stack/gateway) |
-| Agent | tool registry, JSON + pydantic validation, timeouts, step limit, approval stop, run record | [`agent/`](src/agent_stack/agent) |
-| Mock model | OpenAI-compatible test double (keyword tools, configurable TTFT) | [`mockllm/`](src/agent_stack/mockllm) |
+Expected response excerpt:
 
-Design notes: [`docs/design.md`](docs/design.md). Agent loop: [`docs/agent.md`](docs/agent.md).
+```json
+{
+  "status": "completed",
+  "answer": "Computed result: {\"result\": {\"altitude_m\": 11000.0, \"temperature_k\": 216.65, \"pressure_pa\": 22632.0, \"density_kg_m3\": 0.36392, \"speed_of_sound_m_s\": 295.07}}",
+  "steps": [{
+    "tool": "isa_atmosphere",
+    "arguments": {"altitude_m": 11000.0},
+    "outcome": "ok",
+    "result": {"density_kg_m3": 0.36392, "speed_of_sound_m_s": 295.07}
+  }]
+}
+```
 
-## Gateway
+Run ids, timings, usage, and other fields vary. The keyword-driven mock returns the computed tool result verbatim; it is a test double, not a language model evaluating tool-calling quality.
 
-| Concern | Behaviour |
-|---|---|
-| Identity | tenants by `sha256(api_key)`; configs never store raw keys |
-| Access | per-tenant alias allow-list → 404 / 403 |
-| Cost bound | `max_tokens` capped before the request hits a GPU |
-| Quotas | token buckets for req/min and tokens/min; `429` + `Retry-After` |
-| Routing | alias → ordered upstreams; connection / 5xx fail over; 4xx as-is |
-| Streaming | bytes forwarded unchanged; `include_usage` forced for accounting |
-| Logs | one JSON line: tenant, model, upstream, status, latency, TTFT, tokens — no content (tested) |
+## Quickstart without containers
 
-## Agent
+Python 3.11+, `make`, and a CPU are sufficient for unit/integration tests:
 
-| Tool | Purpose | Verified against |
-|---|---|---|
-| `isa_atmosphere` | T, p, ρ, a at 0–20 km | ICAO standard atmosphere tables |
-| `convert_units` | length, pressure, force, mass, temperature | exact unit definitions |
-| `tolerance_stackup` | worst-case and RSS 1-D stack | hand calculation |
-| `submit_simulation_job` | queue a CFD/FEA job | not executed — returns the proposal for approval |
+```bash
+python -m venv .venv && . .venv/bin/activate
+python -m pip install -e '.[dev]'
+pytest -q
+```
 
-Failures under test: unknown tool, bad JSON, out-of-range args, tool raise, non-converging loop, quota exceeded, wrong key. See [`docs/security-tests.md`](docs/security-tests.md).
+Expected: tests pass with no model download. Optional `make validate` also requires `kubectl`, `kubeconform`, `kustomize`, `jsonschema`, network access for its small CRD schema downloads, and the prerequisites detailed in [`docs/DEMO.md`](docs/DEMO.md).
 
-## Measurements
+## What I implemented
 
-Gateway overhead vs an instant mock, Apple M1 Pro, one uvicorn worker per service, median of 3 × 1 500 requests ([method](docs/benchmark.md)):
+### Gateway
+
+- SHA-256 tenant-key identities, per-model allowlists, and request token caps.
+- In-memory **per-replica** request/token buckets. Token usage is charged after the upstream response, so concurrent requests can overdraw a budget; this is not a globally coordinated limiter.
+- Ordered-upstream failover on connection/5xx errors, streaming byte relay, usage accounting, request ids, metrics, and no prompt-content logging in the implemented paths.
+- Local Kind and container packaging, with committed CI and manifest checks.
+
+### Agent
+
+- Closed tool registry, typed argument validation, timeouts, and a bounded model-call loop.
+- Read-only calculation tools for ISA atmosphere, unit conversion, and tolerance stack-ups.
+- `awaiting_approval` before the only side-effect-shaped tool, followed by an idempotent demo approval record.
+- Selected bounded prompt-injection tests: unknown/disallowed calls and side-effect gating, not a comprehensive security assessment.
+
+[Architecture/design](docs/design.md) · [Agent loop](docs/agent.md) · [Security-test boundary](docs/security-tests.md)
+
+## Measured gateway overhead
+
+Against an instant mock on one Apple M1 Pro, one uvicorn worker per service, 1,500 requests per repetition and median of three repetitions ([method](docs/benchmark.md)):
 
 | Mode | Concurrency | Direct p50 | Through gateway p50 | Added |
 |---|---:|---:|---:|---:|
@@ -71,46 +76,26 @@ Gateway overhead vs an instant mock, Apple M1 Pro, one uvicorn worker per servic
 | stream | 1 | 1.55 ms | 3.09 ms | +1.54 ms |
 | stream | 8 | 7.50 ms | 15.28 ms | +7.78 ms |
 
-Forwarding stream bytes unchanged (instead of re-serialising events) halved added latency at concurrency 8 and roughly doubled throughput. At 32 concurrent requests a single worker saturates either way — that is a replica-count problem.
+A byte-forwarding relay improved the recorded concurrency-8 streaming cell versus the previous re-serializing implementation. At concurrency 32 the local single worker was saturated and results were noisy. These measurements cannot be used as real-model inference latency or cluster capacity estimates.
 
-## Deploy
+## Design decisions
 
-```
-deploy/
-├── base/                    gateway (2 replicas, PDB, HPA), agent, NetworkPolicies
-├── components/kserve-vllm/  ServingRuntime + InferenceService + predictor policy
-└── overlays/
-    ├── kind/                mock model, dev Secret
-    └── openshift-ai/        Route, SCC-friendly policy, KServe component
-```
+1. **The service, not the model, controls tool access.** The allowlist, schemas, limits, and approval stop live in application code rather than prompt instructions.
+2. **Approval is explicit but scoped to the demo.** Accept-once semantics are testable without simulating a real queue or claiming independent operator identity.
+3. **Relay bytes, inspect only metadata.** Forwarding the original SSE bytes avoids needless serialization while still allowing usage and timing observations.
 
-Containers run non-root, read-only root, no capabilities, `RuntimeDefault` seccomp. No fixed UID — works with OpenShift `restricted-v2` and Pod Security `restricted`.
+## Packaging
 
-```bash
-docker compose up --build
-curl -s localhost:8000/v1/agent/runs -H 'content-type: application/json' \
-  -d '{"task": "Air density at 11000 m in the ISA model?"}'
-docker compose down
-```
+`deploy/base/` contains the gateway/agent manifests; `deploy/overlays/kind/` adds the local mock and development secret. Containers use non-root users, read-only root filesystems, dropped capabilities, and `RuntimeDefault` seccomp profiles. Development keys in the Compose/Kind files are public demo fixtures only: do not reuse them for a real service or expose this demo stack to untrusted users.
 
-The OpenShift overlay under `deploy/overlays/openshift-ai/` is untested. Do not apply it as if it had been run here.
+The additional cluster overlays have not been applied to a GPU-backed cluster. The recorded deployment and approval transcript is under [`docs/evidence/kind-apply/`](docs/evidence/kind-apply/); use [`docs/DEMO.md`](docs/DEMO.md) for runnable local paths rather than treating every overlay command as tested.
 
-## Status
+## Limitations
 
-| Check | How | Result |
-|---|---|---|
-| Unit + integration | `pytest` | see the latest CI run |
-| Lint | `ruff check` / `ruff format --check` | clean |
-| Manifests | kubeconform + CRD validator | kind / OpenShift AI objects valid |
-| CI / GHCR | [`.github/workflows/ci.yml`](.github/workflows/ci.yml) | enabled; digest recorded |
+- Per-replica, in-memory quotas and approval ledger; no shared durable state.
+- No independent operator authentication on approvals and no real side-effect execution.
+- Mock-backend overhead only; no real-model tool-calling accuracy evaluation.
+- Selected injection/refusal tests do not establish comprehensive security.
+- Local Kind evidence and manifest schema checks are not a production deployment.
 
-Still open:
-
-- Not applied to a live OpenShift GPU cluster (Kind + GHCR is the honesty ceiling today)
-- Quotas are per replica; a shared limiter (Limitador / Redis) is next
-- No tool-calling accuracy eval with a real model — the mock proves plumbing
-- After approval the caller re-submits (approve endpoint is idempotent; the loop does not auto-resume)
-
-Physics baselines: [`docs/physics-validation.md`](docs/physics-validation.md). V&V split: [`docs/vnv.md`](docs/vnv.md).
-
-MIT
+[Quickstart](docs/DEMO.md) · [Benchmark method](docs/benchmark.md) · [Verification boundary](docs/vnv.md) · [MIT license](LICENSE)

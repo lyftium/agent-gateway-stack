@@ -7,7 +7,11 @@ Walkthrough for a screener. Stick to artefacts in this repo.
 1. **Question:** how do you stop every client reinventing keys, quotas, and opaque tool loops?
 2. Open the README “Start here” block.
 3. Point at CI and [`docs/evidence/kind-apply/`](evidence/kind-apply/) (Ready + ISA + approve-once).
-4. **Limits out loud:** Kind against mock-llm; OpenShift AI manifests prepared, not live; no real-model tool-accuracy claim.
+4. **Platform boundary out loud:** OpenShift AI is the **target**; Kind + **mock-llm** is the **proof harness**. Manifests prepared, not live-applied; no real-model tool-accuracy claim.
+
+## Platform boundary
+
+Kind validates gateway + agent plumbing (auth, quotas, approve-once). Overlays include OpenShift AI / KServe-shaped CRs. **Not claimed:** live GPU OpenShift, GPU Operator, or tool-calling quality with a real model.
 
 ## 10 minutes
 

@@ -2,16 +2,20 @@
 
 ![CI](https://github.com/lyftium/agent-gateway-stack/actions/workflows/ci.yml/badge.svg)
 
-Every client that talks to a self-hosted LLM tends to reinvent keys, quotas, and routing. Agents make it worse: opaque tool loops nobody can audit. This repo puts that plumbing in two services.
+OpenAI-compatible gateway with key-hash auth, per-tenant quotas, and failover — plus a bounded tool-calling agent where side effects stop for **approve-once** human approval.
 
-1. **Gateway** — OpenAI-compatible. Auth by key hash, per-tenant request and token quotas, model aliases with failover, streaming pass-through, metrics, logs without prompt text.
-2. **Agent** — reaches models only through the gateway. Allowlisted tools, typed schemas, timeouts; side-effect tools stop for **approve-once** human approval.
+[`docs/DEMO.md`](docs/DEMO.md) · Kind Ready + agent-run transcripts under [`docs/evidence/kind-apply/`](docs/evidence/kind-apply/)
 
-**Start here:** [`docs/DEMO.md`](docs/DEMO.md) and the Kind Ready + agent-run transcripts under [`docs/evidence/kind-apply/`](docs/evidence/kind-apply/).
+Two services:
 
-FastAPI services, Docker, Kubernetes / OpenShift overlays, KServe vLLM manifests, Prometheus. Tests cover allowlist, approve-once, ISA, and injection. Kind runs against **mock-llm**; gateway overhead is about **1.5 ms** p50 at concurrency 1 on a laptop mock. GHCR digest is recorded in the repo. Not claimed: live GPU OpenShift, or tool-calling accuracy with a real model.
+1. **Gateway** — auth by key hash, request/token quotas, model aliases with failover, streaming pass-through, metrics, logs without prompt text.
+2. **Agent** — reaches models only through the gateway; allowlisted tools, typed schemas, timeouts; side-effect tools wait on `POST /v1/agent/approvals`.
 
-Measured serving levers live in [vllm-serving-benchmark-t4](https://github.com/lyftium/vllm-serving-benchmark-t4). KServe packaging also in [drawing-review-service](https://github.com/lyftium/drawing-review-service) `deploy/kserve/`.
+FastAPI · Docker · Kubernetes / OpenShift overlays · KServe vLLM manifests · Prometheus. Tests cover allowlist, approve-once, ISA, and injection. Kind runs against **mock-llm**. GHCR digest recorded. Not claimed: live GPU OpenShift, or tool-calling accuracy with a real model.
+
+Laptop microbench vs an instant mock (not GPU serving overhead): gateway adds about **1.5 ms** p50 at concurrency 1 — see [Measurements](#measurements).
+
+Serving levers: [vllm-serving-benchmark-t4](https://github.com/lyftium/vllm-serving-benchmark-t4). KServe packaging also in [drawing-review-service](https://github.com/lyftium/drawing-review-service) `deploy/kserve/`.
 
 [Trust](#trust-boundary) · [Architecture](#architecture) · [Gateway](#gateway) · [Agent](#agent) · [Measurements](#measurements) · [Deploy](#deploy) · [Status](#status)
 

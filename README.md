@@ -2,6 +2,8 @@
 
 ![CI](https://github.com/lyftium/agent-gateway-stack/actions/workflows/ci.yml/badge.svg)
 
+[Demo](docs/DEMO.md) · [Evidence](docs/evidence/README.md) · [Benchmark method](docs/benchmark.md) · [Verification boundary](docs/vnv.md)
+
 Clients often reimplement API keys, quotas, and routing around every model service, while a tool-calling loop needs a boundary before side effects. I built two small FastAPI services to investigate those boundaries: an OpenAI-compatible gateway and an agent restricted to typed, allowlisted tools.
 
 This is a demonstrator, not an authorization system for real side effects. The agent stops on an approval-required call, and the approvals endpoint records an accepted intent in an in-memory accept-once ledger. It does not execute a real queue job or automatically resume a run, and the endpoint has no separate operator authentication beyond the supplied operator string and the demo service's deployment boundary.
@@ -98,4 +100,4 @@ The additional cluster overlays have not been applied to a GPU-backed cluster. T
 - Selected injection/refusal tests do not establish comprehensive security.
 - Local Kind evidence and manifest schema checks are not a production deployment.
 
-[Quickstart](docs/DEMO.md) · [Benchmark method](docs/benchmark.md) · [Verification boundary](docs/vnv.md) · [MIT license](LICENSE)
+[Demo](docs/DEMO.md) · [Evidence](docs/evidence/README.md) · [Benchmark method](docs/benchmark.md) · [Verification boundary](docs/vnv.md) · [MIT license](LICENSE)
